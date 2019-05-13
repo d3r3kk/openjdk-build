@@ -310,10 +310,10 @@ checkingAndDownloadCaCerts()
   else
     git init
     # TODO: parameterize build repo & branch...
-    git remote add origin -f https://dekeeler.visualstudio.com/BigJ/_git/openjdk-build
+    git remote add origin -f https://ms-juniper.visualstudio.com/BigJ/_git/adopt-build
     git config core.sparsecheckout true
     echo "security/*" >> .git/info/sparse-checkout
-    git pull origin azure-devops-pipeline
+    git pull origin juniper
   fi
 
   cd "${BUILD_CONFIG[WORKSPACE_DIR]}/${BUILD_CONFIG[WORKING_DIR]}" || exit
