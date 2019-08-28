@@ -309,8 +309,7 @@ checkingAndDownloadCaCerts()
     fi
   else
     git init
-    # TODO: parameterize build repo & branch...
-    git remote add origin -f https://ms-juniper.visualstudio.com/Juniper/_git/adopt-build
+    git remote add origin -f "${BUILD_CONFIG[ADOPTOPENJDK_BUILD_REPO]}"
     git config core.sparsecheckout true
     echo "security/*" >> .git/info/sparse-checkout
     git pull origin juniper

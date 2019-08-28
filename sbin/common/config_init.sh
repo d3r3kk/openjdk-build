@@ -33,6 +33,7 @@
 CONFIG_PARAMS=(
 ALSA_LIB_VERSION
 ALSA_TARBALL_URI
+ADOPTOPENJDK_BUILD_REPO
 BRANCH
 BUILD_FULL_NAME
 BUILD_VARIANT
@@ -175,6 +176,9 @@ function parseConfigurationArguments() {
 
         "--alsa-tarball-uri" )
         BUILD_CONFIG[ALSA_TARBALL_URI]="$1"; shift;;
+
+        "--adoptopenjdk-build-repo" )
+        BUILD_CONFIG[ADOPTOPENJDK_BUILD_REPO]="$1"; shift;;
 
         "--build-variant" )
         BUILD_CONFIG[BUILD_VARIANT]="$1"; shift;;
@@ -327,6 +331,9 @@ function configDefaults() {
 
   # The OpenJDK source code repository to build from, e.g. an AdoptOpenJDK repo
   BUILD_CONFIG[REPOSITORY]=""
+
+  # The default AdoptOpenJDK/openjdk-build repo link
+  BUILD_CONFIG[ADOPTOPENJDK_BUILD_REPO]="https://github.com/AdoptOpenJDK/openjdk-build"
 
   # Dependency information
   BUILD_CONFIG[ALSA_LIB_VERSION]="1.1.6"
