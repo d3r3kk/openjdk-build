@@ -54,7 +54,6 @@ FREETYPE
 FREETYPE_DIRECTORY
 FREETYPE_FONT_BUILD_TYPE_PARAM
 FREETYPE_FONT_VERSION
-FREETYPE_TARBALL_URI
 KEEP_CONTAINER
 JDK_BOOT_DIR
 JDK_PATH
@@ -225,9 +224,6 @@ function parseConfigurationArguments() {
         "--skip-freetype" | "-F" )
         BUILD_CONFIG[FREETYPE]=false;;
 
-        "--freetype-tarball-uri" )
-        BUILD_CONFIG[FREETYPE_TARBALL_URI]="$1"; shift;;
-
         "--help" | "-h" )
         man ./makejdk-any-platform.1;;
 
@@ -344,7 +340,6 @@ function configDefaults() {
   BUILD_CONFIG[FREETYPE]=true
   BUILD_CONFIG[FREETYPE_DIRECTORY]=""
   BUILD_CONFIG[FREETYPE_FONT_VERSION]="2.9.1"
-  BUILD_CONFIG[FREETYPE_TARBALL_URI]="https://download.savannah.gnu.org/releases/freetype/freetype-${BUILD_CONFIG[FREETYPE_FONT_VERSION]}.tar.gz"
   BUILD_CONFIG[FREETYPE_FONT_BUILD_TYPE_PARAM]=""
 
   if [ "${BUILD_CONFIG[OS_KERNEL_NAME]}" == "aix" ] || [ "${BUILD_CONFIG[OS_KERNEL_NAME]}" == "sunos" ]; then

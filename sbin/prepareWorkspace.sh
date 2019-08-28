@@ -210,9 +210,7 @@ checkingAndDownloadingFreeType()
   if [[ ! -z "$FOUND_FREETYPE" ]] ; then
     echo "Skipping FreeType download"
   else
-    
-    echo "Downloading freetype tarball from ${BUILD_CONFIG[FREETYPE_TARBALL_URI]}."
-    downloadFile "freetype.tar.gz" "${BUILD_CONFIG[FREETYPE_TARBALL_URI]}"
+    downloadFile "freetype.tar.gz" "https://download.savannah.gnu.org/releases/freetype/freetype-${BUILD_CONFIG[FREETYPE_FONT_VERSION]}.tar.gz"
 
     rm -rf "./freetype" || true
     mkdir -p "freetype" || true
