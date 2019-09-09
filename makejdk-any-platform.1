@@ -58,6 +58,10 @@ specify the version of Alsa to download.
 specify an alternate download location to the alsa tarball.
 Must be in tar.bz2 format. Note this causes the --alsa-version
 to be ignored.
+.TP
+.BR \-\-adoptopenjdk-build-repo " " \fI<uri>\fR
+specify the uri of AdoptOpenJDK/openjdk-build repo.
+.TP
 .BR \-b ", " \-\-branch " " \fI<branch>\fR
 specify a custom branch to build from, e.g. dev.
 For reference, AdoptOpenJDK GitHub source repos default to the \fI<dev>\fR
@@ -103,10 +107,6 @@ This is typically used in conjunction with \fB<-F>\fR.
 .TP
 .BR \-\-freetype-build-param " " \fI<parameter>\fR
 specify any special freetype build parameters (required for some OS's).
-.TP
-.BR \-\-freetype-tarball-uri " " \fI<uri>\fR
-specify the Uri to download the freetype source tarball from must be \fI.tar.gz\fR format.
-Note this will ignore the \fB<--freetype-version>\fR switch.
 .TP
 .BR \-\-freetype-version " " \fI<version>\fR
 specify the version of freetype you are building.
