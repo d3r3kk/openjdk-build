@@ -31,8 +31,13 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$SCRIPT_DIR/common/constants.sh"
 
 # Set default versions for 3 libraries that OpenJDK relies on to build
+ALSA_LIB_VERSION=${ALSA_LIB_VERSION:-1.1.6}
+ALSA_LIB_CHECKSUM=${ALSA_LIB_CHECKSUM:-5f2cd274b272cae0d0d111e8a9e363f08783329157e8dd68b3de0c096de6d724}
+FREEMARKER_LIB_CHECKSUM=${FREEMARKER_LIB_CHECKSUM:-eb790d229d45fbaad1662a5b3e7a6a9d9c628b92f04567066dcdc8d2a3fe3660}
+FREETYPE_LIB_CHECKSUM=${FREETYPE_LIB_CHECKSUM:-ec391504e55498adceb30baceebd147a6e963f636eb617424bcfc47a169898ce}
+
 FREETYPE_FONT_SHARED_OBJECT_FILENAME="libfreetype.so*"
-FREEMARKER_LIB_VERSION=${FREEMARKER_LIB_VERSION:-2.3.28}
+FREEMARKER_LIB_VERSION=${FREEMARKER_LIB_VERSION:-2.3.29}
 
 # Create a new clone or update the existing clone of the OpenJDK source repo
 # TODO refactor this for SRP
@@ -42,7 +47,7 @@ checkoutAndCloneOpenJDKGitRepo()
   cd "${BUILD_CONFIG[WORKSPACE_DIR]}/${BUILD_CONFIG[WORKING_DIR]}"
 
   # Check that we have a git repo of a valid openjdk version on our local file system
-  if [ -d "${BUILD_CONFIG[OPENJDK_SOURCE_DIR]}/.git" ] && ( [ "${BUILD_CONFIG[OPENJDK_CORE_VERSION]}" == "${JDK8_CORE_VERSION}" ] || [ "${BUILD_CONFIG[OPENJDK_CORE_VERSION]}" == "${JDK9_CORE_VERSION}" ] || [ "${BUILD_CONFIG[OPENJDK_CORE_VERSION]}" == "${JDK10_CORE_VERSION}" ] || [ "${BUILD_CONFIG[OPENJDK_CORE_VERSION]}" == "${JDK11_CORE_VERSION}" ] || [ "${BUILD_CONFIG[OPENJDK_CORE_VERSION]}" == "${JDK12_CORE_VERSION}" ] ) ; then
+  if [ -d "${BUILD_CONFIG[OPENJDK_SOURCE_DIR]}/.git" ] && ( [ "${BUILD_CONFIG[OPENJDK_CORE_VERSION]}" == "${JDK8_CORE_VERSION}" ] || [ "${BUILD_CONFIG[OPENJDK_CORE_VERSION]}" == "${JDK9_CORE_VERSION}" ] || [ "${BUILD_CONFIG[OPENJDK_CORE_VERSION]}" == "${JDK10_CORE_VERSION}" ] || [ "${BUILD_CONFIG[OPENJDK_CORE_VERSION]}" == "${JDK11_CORE_VERSION}" ] || [ "${BUILD_CONFIG[OPENJDK_CORE_VERSION]}" == "${JDK12_CORE_VERSION}" ] || [ "${BUILD_CONFIG[OPENJDK_CORE_VERSION]}" == "${JDK13_CORE_VERSION}" ]) ; then
     set +e
     git --git-dir "${BUILD_CONFIG[OPENJDK_SOURCE_DIR]}/.git" remote -v
     echo "${BUILD_CONFIG[OPENJDK_CORE_VERSION]}"
@@ -93,6 +98,14 @@ checkoutAndCloneOpenJDKGitRepo()
     git remote set-branches --add origin "${BUILD_CONFIG[BRANCH]}"
     git fetch --all ${BUILD_CONFIG[SHALLOW_CLONE_OPTION]}
     git reset --hard "origin/${BUILD_CONFIG[BRANCH]}"
+  fi
+
+  if [[ "${BUILD_CONFIG[BUILD_VARIANT]}" == "${BUILD_VARIANT_HOTSPOT}" ]] && [[ "${BUILD_CONFIG[OPENJDK_FEATURE_NUMBER]}" -ge 11 ]] ; then
+     # Verify Adopt patches tag is being built, otherwise we may be accidently just building "raw" OpenJDK
+     if [ ! -f "${ADOPTOPENJDK_MD_MARKER_FILE}" ] && [ "${BUILD_CONFIG[DISABLE_ADOPT_BRANCH_SAFETY]}" == "false" ]; then
+       echo "${ADOPTOPENJDK_MD_MARKER_FILE} marker file not found in fetched source to be built, this may mean the wrong SCMReference build parameter has been specified. Ensure the correct AdoptOpenJDK patch release tag is specified, eg.for build jdk-11.0.4+10, it would be jdk-11.0.4+10_adopt"
+       exit 1
+     fi 
   fi
 
   git clean -ffdx
@@ -154,7 +167,7 @@ checkingAndDownloadingAlsa()
     local alsaTar="alsa-lib.tar";
     local alsaTarBz="${alsaTar}.bz2";
     
-    echo "Downloading Alsa tarball from ${BUILD_CONFIG[ALSA_TARBALL_URI]}"
+    echo "Downloading Alsa tarball from ${BUILD_CONFIG[ALSA_TARBALL_URI]}" ${ALSA_LIB_CHECKSUM}
 
     downloadFile "${alsaTarBz}" "${BUILD_CONFIG[ALSA_TARBALL_URI]}"
     if [[ "${BUILD_CONFIG[OS_KERNEL_NAME]}" == "aix" ]] || [[ "${BUILD_CONFIG[OS_KERNEL_NAME]}" == "sunos" ]]; then
@@ -165,6 +178,56 @@ checkingAndDownloadingAlsa()
       tar -xf "${alsaTarBz}" --strip-components=1 -C "${BUILD_CONFIG[WORKSPACE_DIR]}/${BUILD_CONFIG[WORKING_DIR]}/installedalsa/"
       rm "${alsaTarBz}"
     fi
+  fi
+}
+
+sha256File() {
+  if [ -x "$(command -v shasum)" ]; then
+    (shasum -a 256 | cut -f1 -d' ') < $1
+  else
+    sha256sum $1 | cut -f1 -d' '
+  fi
+}
+
+checkFingerprint() {
+  local sigFile="$1"
+  local fileName="$2"
+  local publicKey="$3"
+  local expectedFingerprint="$4"
+  local expectedChecksum="$5"
+
+  if ! [ -x "$(command -v gpg)" ] || [ "${BUILD_CONFIG[OS_ARCHITECTURE]}" == "armv7l" ]; then
+    echo "WARNING: GPG not present, resorting to checksum"
+    local actualChecksum=$(sha256File ${fileName})
+
+    if [ "${actualChecksum}" != "${expectedChecksum}" ];
+    then
+      echo "Failed to verify checksum on ${fileName}"
+
+      echo "Expected ${expectedChecksum} got ${actualChecksum}"
+      exit 1
+    fi
+
+    return
+  fi
+
+  rm /tmp/public_key.gpg || true
+
+  gpg --no-options --output /tmp/public_key.gpg --dearmor "${SCRIPT_DIR}/sig_check/${publicKey}.asc"
+
+  # If this dir does not exist, gpg 1.4.20 supplied on Ubuntu16.04 aborts
+  mkdir -p $HOME/.gnupg
+  local verify=$(gpg --no-options -v --no-default-keyring --keyring "/tmp/public_key.gpg" --verify $sigFile $fileName 2>&1)
+
+  echo $verify
+
+  # grep out and trim fingerprint from line of the form "Primary key fingerprint: 58E0 C111 E39F 5408 C5D3  EC76 C1A6 0EAC E707 FDA5"
+  local fingerprint=$(echo $verify | grep "Primary key fingerprint" | egrep -o "([0-9A-F]{4} ? ?){10}" | sed -e 's/[[:space:]]*$//')
+
+  if [ "$fingerprint" != "$expectedFingerprint" ]; then
+    echo "Failed to verify signature of $fileName"
+    echo "expected \"$expectedFingerprint\" got \"$fingerprint\""
+    exit 1
   fi
 }
 
@@ -181,6 +244,12 @@ checkingAndDownloadingFreemarker()
   else
 
     wget -nc --no-check-certificate "https://www.mirrorservice.org/sites/ftp.apache.org/freemarker/engine/${FREEMARKER_LIB_VERSION}/binaries/apache-freemarker-${FREEMARKER_LIB_VERSION}-bin.tar.gz"
+    # Allow fallback to curl since wget fails cert check on macos - issue #1194
+    wget "https://www.apache.org/dist/freemarker/engine/${FREEMARKER_LIB_VERSION}/binaries/apache-freemarker-${FREEMARKER_LIB_VERSION}-bin.tar.gz.asc" ||
+    	curl -o "apache-freemarker-${FREEMARKER_LIB_VERSION}-bin.tar.gz.asc" "https://www.apache.org/dist/freemarker/engine/${FREEMARKER_LIB_VERSION}/binaries/apache-freemarker-${FREEMARKER_LIB_VERSION}-bin.tar.gz.asc"
+
+    checkFingerprint "apache-freemarker-${FREEMARKER_LIB_VERSION}-bin.tar.gz.asc" "apache-freemarker-${FREEMARKER_LIB_VERSION}-bin.tar.gz" "freemarker" "13AC 2213 964A BE1D 1C14 7C0E 1939 A252 0BAB 1D90" "${FREEMARKER_LIB_CHECKSUM}"
+
     mkdir -p "${BUILD_CONFIG[WORKSPACE_DIR]}/${BUILD_CONFIG[WORKING_DIR]}/freemarker-${FREEMARKER_LIB_VERSION}/" || exit
     tar -xzf "apache-freemarker-${FREEMARKER_LIB_VERSION}-bin.tar.gz" --strip-components=1 -C "${BUILD_CONFIG[WORKSPACE_DIR]}/${BUILD_CONFIG[WORKING_DIR]}/freemarker-${FREEMARKER_LIB_VERSION}/"
     rm "apache-freemarker-${FREEMARKER_LIB_VERSION}-bin.tar.gz"
@@ -188,14 +257,28 @@ checkingAndDownloadingFreemarker()
 }
 
 downloadFile() {
-  targetFileName="$1"
-  url="$2"
+  local targetFileName="$1"
+  local url="$2"
 
   # Temporary fudge as curl on my windows boxes is exiting with RC=127
   if [[ "$OSTYPE" == "cygwin" ]] || [[ "$OSTYPE" == "msys" ]] ; then
     wget -O "${targetFileName}" "${url}"
   else
     curl -L -o "${targetFileName}" "${url}"
+  fi
+
+  if [ $# -ge 3 ]; then
+
+    local expectedChecksum="$3"
+    local actualChecksum=$(sha256File ${targetFileName})
+
+    if [ "${actualChecksum}" != "${expectedChecksum}" ];
+    then
+      echo "Failed to verify checksum on ${targetFileName} ${url}"
+
+      echo "Expected ${expectedChecksum} got ${actualChecksum}"
+      exit 1
+    fi
   fi
 }
 
@@ -211,6 +294,8 @@ checkingAndDownloadingFreeType()
     echo "Skipping FreeType download"
   else
     downloadFile "freetype.tar.gz" "https://download.savannah.gnu.org/releases/freetype/freetype-${BUILD_CONFIG[FREETYPE_FONT_VERSION]}.tar.gz"
+    downloadFile "freetype.tar.gz.sig" "https://download.savannah.gnu.org/releases/freetype/freetype-${BUILD_CONFIG[FREETYPE_FONT_VERSION]}.tar.gz.sig"
+    checkFingerprint "freetype.tar.gz.sig" "freetype.tar.gz" "freetype" "58E0 C111 E39F 5408 C5D3 EC76 C1A6 0EAC E707 FDA5" "${FREETYPE_LIB_CHECKSUM}"
 
     rm -rf "./freetype" || true
     mkdir -p "freetype" || true

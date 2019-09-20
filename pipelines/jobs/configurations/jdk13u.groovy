@@ -1,52 +1,43 @@
 targetConfigurations = [
-        "x64Mac"        : [
+        "x64Mac"      : [
                 "hotspot",
                 "openj9"
         ],
-        "x64Linux"      : [
-                "hotspot",
-                "hotspot-jfr",
+        "x64MacXL"    : [
                 "openj9"
         ],
-        "x32Windows"    : [
+        "x64Linux"    : [
                 "hotspot",
                 "openj9"
         ],
-        "x64Windows"    : [
+        "x64Windows"  : [
                 "hotspot",
                 "openj9"
         ],
         "x64WindowsXL"  : [
                 "openj9"
         ],
-        "ppc64Aix"      : [
+        "x32Windows"  : [
+                "hotspot"
+        ],
+        "ppc64Aix"    : [
+                "hotspot"
+        ],
+        "ppc64leLinux": [
                 "hotspot",
                 "openj9"
         ],
-        "ppc64leLinux"  : [
+        "s390xLinux"  : [
                 "hotspot",
                 "openj9"
         ],
-        "s390xLinux"    : [
-                "hotspot",
-                "openj9"
-        ],
-        "aarch64Linux"  : [
+        "aarch64Linux": [
                 "hotspot"
         ],
         "arm32Linux"  : [
                 "hotspot"
         ],
-        "sparcv9Solaris": [
-                "hotspot"
-        ],
-        "x64Solaris": [
-                "hotspot"
-        ],
-        "linuxXL"       : [
-                "openj9"
-        ],
-        "x64MacXL"      : [
+        "linuxXL"     : [
                 "openj9"
         ]
 ]

@@ -16,18 +16,15 @@ def buildConfigurations = [
         x64Mac    : [
                 os                  : 'mac',
                 arch                : 'x64',
-                additionalNodeLabels: [
-                        hotspot: 'build-macstadium-macos1010-1',
-                        openj9:  'build-macstadium-macos1010-2'
-                ],
+                additionalNodeLabels : 'macos10.12',
                 test                : ['sanity.openjdk', 'sanity.system', 'extended.system', 'sanity.perf']
         ],
 
         x64MacXL    : [
                 os                   : 'mac',
                 arch                 : 'x64',
-                additionalNodeLabels : 'build-macstadium-macos1010-2',
-                test                 : ['sanity.openjdk', 'sanity.system', 'extended.system'],
+                additionalNodeLabels : 'macos10.12',
+                test                 : ['sanity.openjdk', 'sanity.system', 'extended.system', 'sanity.perf'],
                 additionalFileNameTag: "macosXL",
                 configureArgs        : '--with-noncompressedrefs'
         ],
@@ -48,7 +45,7 @@ def buildConfigurations = [
                 os                  : 'windows',
                 arch                : 'x64',
                 additionalNodeLabels: [
-                        hotspot: 'win2012',
+                        hotspot: 'win2012&&vs2017',
                         openj9:  'win2012&&vs2017'
                 ],
                 buildArgs : [
@@ -61,7 +58,7 @@ def buildConfigurations = [
                 os                   : 'windows',
                 arch                 : 'x64',
                 additionalNodeLabels : 'win2012&&vs2017',
-                test                 : ['sanity.openjdk', 'sanity.system'],
+                test                 : ['sanity.openjdk', 'sanity.perf', 'sanity.system', 'extended.system'],
                 additionalFileNameTag: "windowsXL",
                 configureArgs        : '--with-noncompressedrefs'
         ],
@@ -70,7 +67,7 @@ def buildConfigurations = [
                 os                  : 'windows',
                 arch                : 'x86-32',
                 additionalNodeLabels: [
-                        hotspot: 'win2012',
+                        hotspot: 'win2012&&vs2017',
                         openj9:  'win2012&&mingw-standalone'
                 ],
                 buildArgs : [
@@ -82,6 +79,7 @@ def buildConfigurations = [
         ppc64Aix    : [
                 os                  : 'aix',
                 arch                : 'ppc64',
+                additionalNodeLabels: 'xlc16',
                 test                : [
                         nightly: false,
                         release: ['sanity.openjdk', 'sanity.system', 'extended.system']
@@ -142,7 +140,7 @@ def buildConfigurations = [
         ],
 ]
 
-def javaToBuild = "jdk11u"
+def javaToBuild = "jdk13u"
 
 node ("master") {
     def scmVars = checkout scm

@@ -408,11 +408,14 @@ return {
             publish = true
         }
 
-        publishName = '' // This is set to a timestamp later on if undefined
+        String publishName = '' // This is set to a timestamp later on if undefined
         if (overridePublishName) {
             publishName = overridePublishName
         } else if (release) {
-            publishName = scmReference
+            // Default to scmReference, remove any trailing "_adopt" from the tag if present
+            if (scmReference) {
+                publishName = scmReference.minus("_adopt")
+            }
         }
 
         return new Builder(
