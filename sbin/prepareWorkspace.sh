@@ -105,7 +105,7 @@ checkoutAndCloneOpenJDKGitRepo()
      if [ ! -f "${ADOPTOPENJDK_MD_MARKER_FILE}" ] && [ "${BUILD_CONFIG[DISABLE_ADOPT_BRANCH_SAFETY]}" == "false" ]; then
        echo "${ADOPTOPENJDK_MD_MARKER_FILE} marker file not found in fetched source to be built, this may mean the wrong SCMReference build parameter has been specified. Ensure the correct AdoptOpenJDK patch release tag is specified, eg.for build jdk-11.0.4+10, it would be jdk-11.0.4+10_adopt"
        exit 1
-     fi 
+     fi
   fi
 
   git clean -ffdx
@@ -166,7 +166,7 @@ checkingAndDownloadingAlsa()
   else
     local alsaTar="alsa-lib.tar";
     local alsaTarBz="${alsaTar}.bz2";
-    
+
     echo "Downloading Alsa tarball from ${BUILD_CONFIG[ALSA_TARBALL_URI]}" ${ALSA_LIB_CHECKSUM}
 
     downloadFile "${alsaTarBz}" "${BUILD_CONFIG[ALSA_TARBALL_URI]}"
@@ -293,8 +293,8 @@ checkingAndDownloadingFreeType()
   if [[ ! -z "$FOUND_FREETYPE" ]] ; then
     echo "Skipping FreeType download"
   else
-    downloadFile "freetype.tar.gz" "https://download.savannah.gnu.org/releases/freetype/freetype-${BUILD_CONFIG[FREETYPE_FONT_VERSION]}.tar.gz"
-    downloadFile "freetype.tar.gz.sig" "https://download.savannah.gnu.org/releases/freetype/freetype-${BUILD_CONFIG[FREETYPE_FONT_VERSION]}.tar.gz.sig"
+    downloadFile "freetype.tar.gz" ${BUILD_CONFIG[FREETYPE_TARBALL_URI]}
+    downloadFile "freetype.tar.gz.sig" "${BUILD_CONFIG[FREETYPE_TARBALL_URI]}.sig"
     checkFingerprint "freetype.tar.gz.sig" "freetype.tar.gz" "freetype" "58E0 C111 E39F 5408 C5D3 EC76 C1A6 0EAC E707 FDA5" "${FREETYPE_LIB_CHECKSUM}"
 
     rm -rf "./freetype" || true

@@ -56,6 +56,7 @@ FREETYPE
 FREETYPE_DIRECTORY
 FREETYPE_FONT_BUILD_TYPE_PARAM
 FREETYPE_FONT_VERSION
+FREETYPE_TARBALL_URI
 KEEP_CONTAINER
 JDK_BOOT_DIR
 JDK_PATH
@@ -228,6 +229,9 @@ function parseConfigurationArguments() {
         "--freetype-build-param" )
         BUILD_CONFIG[FREETYPE_FONT_BUILD_TYPE_PARAM]="$1"; shift;;
 
+        "--freetype-tarball-uri" )
+        BUILD_CONFIG[FREETYPE_TARBALL_URI]="$1"; shift;;
+
         "--freetype-version" )
         BUILD_CONFIG[FREETYPE_FONT_VERSION]="$1"; shift;;
 
@@ -350,6 +354,7 @@ function configDefaults() {
   BUILD_CONFIG[FREETYPE]=true
   BUILD_CONFIG[FREETYPE_DIRECTORY]=""
   BUILD_CONFIG[FREETYPE_FONT_VERSION]="2.9.1"
+  BUILD_CONFIG[FREETYPE_TARBALL_URI]="https://download.savannah.gnu.org/releases/freetype/freetype-${BUILD_CONFIG[FREETYPE_FONT_VERSION]}.tar.gz"
   BUILD_CONFIG[FREETYPE_FONT_BUILD_TYPE_PARAM]=""
 
   case "${BUILD_CONFIG[OS_KERNEL_NAME]}" in
