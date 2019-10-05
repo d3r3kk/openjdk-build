@@ -37,6 +37,7 @@ RUN apt-get update \
     libasound2-dev \
     libcups2-dev \
     libfreetype6-dev \
+    libfontconfig1-dev \
     libx11-dev \
     libxext-dev \
     libxrender-dev \
