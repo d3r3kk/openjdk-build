@@ -1,0 +1,7 @@
+steps:
+  # Unset the global git authorization header. Remove this to ensure we have cleaned up any authorization keys
+  # that could be abused by further runs of this pipeline instance.
+  - script: |
+      git config --global --unset http.extraheader
+    displayName: "Post Build: remove git auth header(s)"
+    condition: always()

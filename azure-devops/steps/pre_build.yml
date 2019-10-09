@@ -1,0 +1,82 @@
+steps:
+  - checkout: none
+
+  - bash: |
+      ERR_MESSAGE_MISSING_ENV=''
+
+      if [ -z $(BUILD_JDK_BOOT_VERSION)  ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set BUILD_JDK_BOOT_VERSION. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ -z $(JAVA_SOURCE_REPO_URI)  ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set JAVA_SOURCE_REPO_URI. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ -z $(BUILD_JAVA_VERSION)  ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set BUILD_JAVA_VERSION to jdk8, jdk11, jdk, etc. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ -z $(BUILD_DEBUG_LEVEL)  ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set BUILD_DEBUG_LEVEL to fastdebug, slowdebug, release. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ -z $(ADOPT_OPENJDK_BUILD_REPO_URI)  ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set ADOPT_OPENJDK_BUILD_REPO_URI to URI of the openjdk-build repo to use. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ -z $(ADOPT_OPENJDK_BUILD_REPO_BRANCH)  ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set ADOPT_OPENJDK_BUILD_REPO_BRANCH to the branch-name of the openjdk-build repo to use. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ ! -z "$ERR_MESSAGE_MISSING_ENV" ]; then
+        echo "##vso[task.logissue type=error;]$ERR_MESSAGE_MISSING_ENV"
+        echo "##vso[task.complete result=Failed;]"
+      fi;
+    displayName: "Pre Build: check required environment variables"
+
+  - script: |
+      echo ##vso[task.setvariable variable=HOME]$(Agent.BuildDirectory)
+    displayName: "Pre Build: set HOME environment variable"
+
+  - bash: |
+      git config --global core.autocrlf input
+    displayName: "Pre Build: configure crlf option"
+
+  # Set the git authorization header for subsequent git pull/clone operations...
+  # <This step is unnecessary on your local workstation, can be approximated by using SSH URIs>
+  - bash: |
+      git config --global --add http.extraheader "AUTHORIZATION: bearer $(System.AccessToken)"
+    displayName: "Pre Build: add auth header"
+
+  # Checkout the sources for the OpenJDK-11-updates repo (save the makejdk script from doing this later)
+  # Note: Ensure the JUNIPER_BUILD_BRANCH is set to a valid default.
+  - bash: |
+      git clone --single-branch --branch $(ADOPT_OPENJDK_BUILD_REPO_BRANCH) --depth 1 $(ADOPT_OPENJDK_BUILD_REPO_URI) "$(Build.SourcesDirectory)"
+    displayName: "Pre Build: checkout openjdk-build"
+
+  - bash: |
+      # RH is just the prepended `refs/heads/` that we want to remove to get the branch name
+      RH='refs/heads/';
+      # Apologies for the bash magic here, see:
+      # https://landoflinux.com/linux_bash_scripting_substring_tests.html#Extracting%20a%20Substring%20from%20a%20Variable
+      JAVA_SOURCE_REPO_BRANCH=${BUILD_SOURCEBRANCH:${#RH}};
+      echo "possible JAVA_SOURCE_REPO_BRANCH = $JAVA_SOURCE_REPO_BRANCH"
+
+      if [ -n "$SYSTEM_PULLREQUEST_SOURCEBRANCH" -o "$SYSTEM_PULLREQUEST_SOURCEBRANCH" != "" ]; then
+        # If this is a pull request, SYSTEM_PULLREQUEST_SOURCEBRANCH will be set to the 'refs/heads/<branch-name>',
+        # extract branch-name.
+        JAVA_SOURCE_REPO_BRANCH=${SYSTEM_PULLREQUEST_SOURCEBRANCH:${#RH}};
+        echo "update JAVA_SOURCE_REPO_BRANCH to  PR branch $JAVA_SOURCE_REPO_BRANCH"
+      fi;
+      echo "##vso[task.setvariable variable=JAVA_SOURCE_REPO_BRANCH]$JAVA_SOURCE_REPO_BRANCH"
+    displayName: "Pre Build: set build source branch"
+
+  - script: |
+      echo ##vso[task.setvariable variable=VARIANT]hotspot
+      echo ##vso[task.setvariable variable=ARCHITECTURE]x64
+    displayName: "Pre Build: set shared environment variables"
+
+  - bash: |
+      printenv
+    displayName: "Pre Build: show all env vars"
+    condition: eq(variables['system.debug'], 'true')

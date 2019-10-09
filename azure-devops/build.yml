@@ -1,0 +1,58 @@
+parameters:
+  linux_container: ""
+
+stages:
+  - stage: build_linux_binaries
+    displayName: "Build Linux Binaries"
+    dependsOn: []
+    jobs:
+      - job: build_linux
+        displayName: "Build Linux"
+        condition: or(
+          not(variables.BUILD_PLATFORMS),
+          eq(variables.BUILD_PLATFORMS, '*'),
+          contains(variables.BUILD_PLATFORMS, 'Linux')
+          )
+        pool:
+          vmImage: ubuntu-16.04
+        container: ${{ parameters.linux_container }}
+        steps:
+          - template: ./steps/pre_build.yml
+          - template: ./steps/build_linux.yml
+          - template: ./steps/post_build.yml
+
+  - stage: build_macOS_binaries
+    displayName: "Build macOS Binaries"
+    dependsOn: []
+    jobs:
+      - job: build_macOS
+        displayName: "Build macOS"
+        condition: or(
+          not(variables.BUILD_PLATFORMS),
+          eq(variables.BUILD_PLATFORMS, '*'),
+          contains(variables.BUILD_PLATFORMS, 'macOS')
+          )
+        pool:
+          vmImage: macOS-10.14
+        steps:
+          - template: ./steps/pre_build.yml
+          - template: ./steps/build_macOS.yml
+          - template: ./steps/post_build.yml
+
+  - stage: build_windows_binaries
+    displayName: "Build Windows Binaries"
+    dependsOn: []
+    jobs:
+      - job: build_macOS
+        displayName: "Build Windows"
+        condition: or(
+          not(variables.BUILD_PLATFORMS),
+          eq(variables.BUILD_PLATFORMS, '*'),
+          contains(variables.BUILD_PLATFORMS, 'Windows')
+          )
+        pool:
+          vmImage: vs2017-win2016
+        steps:
+          - template: ./steps/pre_build.yml
+          - template: ./steps/build_windows.yml
+          - template: ./steps/post_build.yml

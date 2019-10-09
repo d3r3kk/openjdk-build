@@ -1,0 +1,87 @@
+parameters:
+  cygwinUri: "https://buildreqs.blob.core.windows.net/windows/cygwin.exe"
+  jdk7Uri: "https://buildreqs.blob.core.windows.net/windows/jdk7.zip"
+  jdk7BootDir: "/cygdrive/d/a/1/openjdk/java-se-7u75-ri"
+  jdk8Uri: "https://buildreqs.blob.core.windows.net/windows/jdk8.zip"
+  jdk8BootDir: "/cygdrive/d/a/1/openjdk/jdk8u222-b10"
+  jdk10Uri: "https://buildreqs.blob.core.windows.net/windows/jdk10.zip"
+  jdk10BootDir: "/cygdrive/d/a/1/openjdk/jdk-10.0.2+13"
+  jdk11Uri: "https://buildreqs.blob.core.windows.net/windows/jdk11.zip"
+  jdk11BootDir: "/cygdrive/d/a/1/openjdk/jdk-11.0.4+11"
+  jdk12Uri: "https://buildreqs.blob.core.windows.net/windows/jdk12.zip"
+  jdk12BootDir: "/cygdrive/d/a/1/openjdk/jdk-12.0.2+10"
+  freetypeUri: "https://buildreqs.blob.core.windows.net/freetype/freetype-2.5.3.tar.gz"
+
+steps:
+  - script: |
+      echo ##vso[task.setvariable variable=OPERATING_SYSTEM]windows
+    displayName: "Windows Build: set environment variables"
+
+  - powershell: |
+      $ProgressPreference = 'SilentlyContinue';
+      # pre install
+      New-Item -Path $(Agent.BuildDirectory) -Name 'openjdk' -ItemType 'directory';
+      New-Item -Path $(Agent.BuildDirectory) -Name 'temp' -ItemType 'directory';
+      # cygwin
+      Invoke-WebRequest -UseBasicParsing ${{ parameters.cygwinUri }} -OutFile '$(Agent.BuildDirectory)\temp\cygwin.exe';
+      Start-Process -Wait -FilePath '$(Agent.BuildDirectory)\temp\cygwin.exe' -ArgumentList '--packages wget,rsync,gnupg,git,autoconf,make,unzip,zip,cpio,curl,grep,perl --quiet-mode --download --local-install --delete-orphans --site https://mirrors.kernel.org/sourceware/cygwin/ --local-package-dir $(Agent.BuildDirectory)\cygwin_packages --root $(Agent.BuildDirectory)\cygwin64';
+      # java 7
+      Invoke-WebRequest -UseBasicParsing ${{ parameters.jdk7Uri }} -OutFile '$(Agent.BuildDirectory)\temp\jdk7.zip';
+      Expand-Archive -LiteralPath '$(Agent.BuildDirectory)\temp\jdk7.zip' -DestinationPath '$(Agent.BuildDirectory)\openjdk';
+      # java 8
+      Invoke-WebRequest -UseBasicParsing ${{ parameters.jdk8Uri }} -OutFile '$(Agent.BuildDirectory)\temp\jdk8.zip';
+      Expand-Archive -LiteralPath '$(Agent.BuildDirectory)\temp\jdk8.zip' -DestinationPath $(Agent.BuildDirectory)\openjdk;
+      # java 10
+      Invoke-WebRequest -UseBasicParsing ${{ parameters.jdk10Uri }} -OutFile '$(Agent.BuildDirectory)\temp\jdk10.zip';
+      Expand-Archive -LiteralPath '$(Agent.BuildDirectory)\temp\jdk10.zip' -DestinationPath '$(Agent.BuildDirectory)\openjdk';
+      # java 11
+      Invoke-WebRequest -UseBasicParsing ${{ parameters.jdk11Uri }} -OutFile '$(Agent.BuildDirectory)\temp\jdk11.zip';
+      Expand-Archive -LiteralPath '$(Agent.BuildDirectory)\temp\jdk11.zip' -DestinationPath '$(Agent.BuildDirectory)\openjdk';
+      # java 12
+      Invoke-WebRequest -UseBasicParsing ${{ parameters.jdk12Uri }} -OutFile '$(Agent.BuildDirectory)\temp\jdk12.zip';
+      Expand-Archive -LiteralPath '$(Agent.BuildDirectory)\temp\jdk12.zip' -DestinationPath '$(Agent.BuildDirectory)\openjdk';
+      # install vs2010 for jdk8u
+      if("$(BUILD_JAVA_VERSION)" -eq "jdk8u"){
+        Invoke-WebRequest -UseBasicParsing 'https://buildreqs.blob.core.windows.net/windows/vs2010.exe' -OutFile '$(Agent.BuildDirectory)\temp\vs2010.exe';
+        Start-Process -Wait -FilePath '$(Agent.BuildDirectory)\temp\vs2010.exe' -ArgumentList '/q /norestart';
+      }
+    displayName: "Windows Build: install dependencies"
+
+  - script: |
+      echo ##vso[task.setvariable variable=Path]$(Agent.BuildDirectory)\cygwin64\bin;%PATH%
+      echo ##vso[task.setvariable variable=JDK7_BOOT_DIR]${{ parameters.jdk7BootDir }}
+      echo ##vso[task.setvariable variable=JDK8_BOOT_DIR]${{ parameters.jdk8BootDir }}
+      echo ##vso[task.setvariable variable=JDK10_BOOT_DIR]${{ parameters.jdk10BootDir }}
+      echo ##vso[task.setvariable variable=JDK11_BOOT_DIR]${{ parameters.jdk11BootDir }}
+      echo ##vso[task.setvariable variable=JDK12_BOOT_DIR]${{ parameters.jdk12BootDir }}
+    displayName: "Windows Build: set environment variables"
+
+  # Use the AdoptOpenJDK build scripts to build the OpenJDK8 binaries.
+  - script: |
+      IF "$(BUILD_JAVA_VERSION)"=="jdk8u" (
+        set JDK_BOOT_DIR=%JDK7_BOOT_DIR%
+        set TOOLCHAIN_VERSION=2010
+        set EXTRA_CONFIGURE_ARGS=
+        set EXTRA_OPTION=--freetype-tarball-uri ${{ parameters.freetypeUri }}
+      )
+      IF "$(BUILD_JAVA_VERSION)"=="jdk11u" (
+        set JDK_BOOT_DIR=%JDK10_BOOT_DIR%
+        set TOOLCHAIN_VERSION=2017
+        set EXTRA_CONFIGURE_ARGS=--disable-warnings-as-errors
+        set EXTRA_OPTION=
+      )
+      IF "$(BUILD_JAVA_VERSION)"=="jdk" (
+        set JDK_BOOT_DIR=%JDK12_BOOT_DIR%
+        set TOOLCHAIN_VERSION=2017
+        set EXTRA_CONFIGURE_ARGS=--disable-warnings-as-errors
+        set EXTRA_OPTION=
+      )
+      bash.exe -c "./makejdk-any-platform.sh --adoptopenjdk-build-repo $(ADOPT_OPENJDK_BUILD_REPO_URI) --repository $(JAVA_SOURCE_REPO_URI) --branch %JAVA_SOURCE_REPO_BRANCH% -J %JDK_BOOT_DIR% --configure-args '%EXTRA_CONFIGURE_ARGS% --with-debug-level=$(BUILD_DEBUG_LEVEL) --with-toolchain-version=%TOOLCHAIN_VERSION%' -d artifacts --target-file-name microsoft-jdk_$(Agent.OSArchitecture)_$(Agent.OS)_hotspot-$(BUILD_DEBUG_LEVEL)_$(Build.BuildId).tar.gz --no-adopt-patches --disable-adopt-branch-safety %EXTRA_OPTION% $(BUILD_JAVA_VERSION)"
+    displayName: "Windows Build: start makejdk-any-platform process"
+
+  # Upload the produced JDK/JRE binary to the build artifact service.
+  - task: PublishPipelineArtifact@1
+    inputs:
+      artifactName: $(Agent.OS)_$(Agent.OSArchitecture)
+      targetPath: "workspace/artifacts"
+    displayName: "Windows Build: update JKD/JRE artifact"

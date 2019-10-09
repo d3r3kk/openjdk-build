@@ -1,0 +1,38 @@
+parameters:
+  alsaUri: "https://buildreqs.blob.core.windows.net/alsa/alsa-lib-1.1.6.tar.bz2"
+
+steps:
+  - script: |
+      echo ##vso[task.setvariable variable=OPERATING_SYSTEM]macOS
+    displayName: "macOS Build: set environment variables"
+
+  - script: |
+      brew install autoconf
+    displayName: "macOS Build: brew install dependencies"
+
+  - script: |
+      case "$(BUILD_JAVA_VERSION)" in
+            "jdk8u")    export JDK_BOOT_DIR="/Library/Java/JavaVirtualMachines/zulu-7.jdk/Contents/Home";;
+            "jdk11u")   export JDK_BOOT_DIR="/Library/Java/JavaVirtualMachines/zulu-11.jdk/Contents/Home";;
+            "jdk")   export JDK_BOOT_DIR="/Library/Java/JavaVirtualMachines/zulu-12.jdk/Contents/Home";;
+      esac
+      ./makejdk-any-platform.sh \
+        --adoptopenjdk-build-repo $(ADOPT_OPENJDK_BUILD_REPO_URI) \
+        -J "${JDK_BOOT_DIR}" \
+        --repository $(JAVA_SOURCE_REPO_URI) \
+        --branch "${JAVA_SOURCE_REPO_BRANCH}" \
+        --configure-args "--with-debug-level=$(BUILD_DEBUG_LEVEL)" \
+        -d artifacts \
+        --target-file-name microsoft-jdk_$(Agent.OSArchitecture)_$(Agent.OS)_hotspot-$(BUILD_DEBUG_LEVEL)_$(Build.BuildId).tar.gz \
+        --alsa-tarball-uri ${{ parameters.alsaUri }} \
+        --no-adopt-patches \
+        --disable-adopt-branch-safety \
+        $(BUILD_JAVA_VERSION)
+    displayName: "macOS Build: start makejdk-any-platform process"
+
+  # Upload the produced JDK/JRE binary to the build artifact service.
+  - task: PublishPipelineArtifact@1
+    inputs:
+      artifactName: $(Agent.OS)_$(Agent.OSArchitecture)
+      targetPath: "workspace/artifacts"
+    displayName: "macOS Build: upload JKD/JRE artifact"
