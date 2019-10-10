@@ -1,21 +1,14 @@
 parameters:
+  buildJavaVersion: ""
   alsaUri: "https://buildreqs.blob.core.windows.net/alsa/alsa-lib-1.1.6.tar.bz2"
 
 steps:
-  - script: |
-      echo ##vso[task.setvariable variable=OPERATING_SYSTEM]macOS
-    displayName: "macOS Build: set environment variables"
+  - bash: |
+      printenv
+    displayName: "macOS Build: show all env vars"
+    condition: eq(variables['system.debug'], 'true')
 
   - script: |
-      brew install autoconf
-    displayName: "macOS Build: brew install dependencies"
-
-  - script: |
-      case "$(BUILD_JAVA_VERSION)" in
-            "jdk8u")    export JDK_BOOT_DIR="/Library/Java/JavaVirtualMachines/zulu-7.jdk/Contents/Home";;
-            "jdk11u")   export JDK_BOOT_DIR="/Library/Java/JavaVirtualMachines/zulu-11.jdk/Contents/Home";;
-            "jdk")   export JDK_BOOT_DIR="/Library/Java/JavaVirtualMachines/zulu-12.jdk/Contents/Home";;
-      esac
       ./makejdk-any-platform.sh \
         --adoptopenjdk-build-repo $(ADOPT_OPENJDK_BUILD_REPO_URI) \
         -J "${JDK_BOOT_DIR}" \
@@ -27,7 +20,7 @@ steps:
         --alsa-tarball-uri ${{ parameters.alsaUri }} \
         --no-adopt-patches \
         --disable-adopt-branch-safety \
-        $(BUILD_JAVA_VERSION)
+        ${{ parameters.buildJavaVersion }}
     displayName: "macOS Build: start makejdk-any-platform process"
 
   # Upload the produced JDK/JRE binary to the build artifact service.

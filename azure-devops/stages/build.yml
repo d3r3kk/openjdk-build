@@ -1,0 +1,77 @@
+parameters:
+  linuxContainer: ""
+  linuxBootJDKUri: ""
+  macOSBootJDKUri: ""
+  windowsBootJDKUri: ""
+  buildJavaVersion: ""
+
+stages:
+  - stage: build_linux_binaries
+    displayName: "Build Linux Binaries"
+    dependsOn: []
+    jobs:
+      - job: build_linux
+        displayName: "Build Linux"
+        condition: or(
+          not(variables.BUILD_PLATFORMS),
+          eq(variables.BUILD_PLATFORMS, '*'),
+          contains(variables.BUILD_PLATFORMS, 'Linux')
+          )
+        pool:
+          vmImage: ubuntu-16.04
+        container: ${{ parameters.linuxContainer }}
+        steps:
+          - template: ../steps/linux/pre_build.yml
+            parameters:
+              buildJavaVersion: ${{ parameters.buildJavaVersion }}
+              linuxBootJDKUri: ${{ parameters.linuxBootJDKUri }}
+          - template: ../steps/linux/build.yml
+            parameters:
+              buildJavaVersion: ${{ parameters.buildJavaVersion }}
+          - template: ../steps/post_build.yml
+
+  - stage: build_macOS_binaries
+    displayName: "Build macOS Binaries"
+    dependsOn: []
+    jobs:
+      - job: build_macOS
+        displayName: "Build macOS"
+        condition: or(
+          not(variables.BUILD_PLATFORMS),
+          eq(variables.BUILD_PLATFORMS, '*'),
+          contains(variables.BUILD_PLATFORMS, 'macOS')
+          )
+        pool:
+          vmImage: macOS-10.14
+        steps:
+          - template: ../steps/macOS/pre_build.yml
+            parameters:
+              buildJavaVersion: ${{ parameters.buildJavaVersion }}
+              macOSBootJDKUri: ${{ parameters.macOSBootJDKUri }}
+          - template: ../steps/macOS/build.yml
+            parameters:
+              buildJavaVersion: ${{ parameters.buildJavaVersion }}
+          - template: ../steps/post_build.yml
+
+  - stage: build_windows_binaries
+    displayName: "Build Windows Binaries"
+    dependsOn: []
+    jobs:
+      - job: build_macOS
+        displayName: "Build Windows"
+        condition: or(
+          not(variables.BUILD_PLATFORMS),
+          eq(variables.BUILD_PLATFORMS, '*'),
+          contains(variables.BUILD_PLATFORMS, 'Windows')
+          )
+        pool:
+          vmImage: vs2017-win2016
+        steps:
+          - template: ../steps/windows/pre_build.yml
+            parameters:
+              buildJavaVersion: ${{ parameters.buildJavaVersion }}
+              windowsBootJDKUri: ${{ parameters.windowsBootJDKUri }}
+          - template: ../steps/windows/build.yml
+            parameters:
+              buildJavaVersion: ${{ parameters.buildJavaVersion }}
+          - template: ../steps/post_build.yml

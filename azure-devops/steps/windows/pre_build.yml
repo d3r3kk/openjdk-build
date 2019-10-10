@@ -1,0 +1,53 @@
+parameters:
+  buildJavaVersion: ""
+  windowsBootJDKUri: ""
+  jdkBootDir: "/cygdrive/d/a/1/openjdk"
+
+steps:
+  - powershell: |
+      $ProgressPreference = 'SilentlyContinue';
+      # pre install
+      New-Item -Path $(Agent.BuildDirectory) -Name 'openjdk' -ItemType 'directory';
+      New-Item -Path $(Agent.BuildDirectory) -Name 'temp' -ItemType 'directory';
+      # cygwin
+      Invoke-WebRequest -UseBasicParsing https://cygwin.com/setup-x86_64.exe -OutFile '$(Agent.BuildDirectory)\temp\cygwin.exe';
+      Start-Process -Wait -FilePath '$(Agent.BuildDirectory)\temp\cygwin.exe' -ArgumentList '--packages wget,rsync,gnupg,git,autoconf,make,unzip,zip,cpio,curl,grep,perl --quiet-mode --download --local-install --delete-orphans --site https://mirrors.kernel.org/sourceware/cygwin/ --local-package-dir $(Agent.BuildDirectory)\cygwin_packages --root $(Agent.BuildDirectory)\cygwin64';
+      # java
+      if("${{ parameters.windowsBootJDKUri }}" -ne "") {
+        Invoke-WebRequest -UseBasicParsing "${{ parameters.windowsBootJDKUri }}" -OutFile '$(Agent.BuildDirectory)\temp\jdk.zip';
+        Expand-Archive -LiteralPath '$(Agent.BuildDirectory)\temp\jdk.zip' -DestinationPath $(Agent.BuildDirectory)\temp\openjdk;
+      } elseif("${{ parameters.buildJavaVersion }}" -eq "jdk8u"){
+        # java 8
+        Invoke-WebRequest -UseBasicParsing "https://api.adoptopenjdk.net/v2/binary/releases/openjdk8?openjdk_impl=hotspot&os=windows&arch=x64&release=latest&type=jdk" -OutFile '$(Agent.BuildDirectory)\temp\jdk8.zip';
+        Expand-Archive -LiteralPath '$(Agent.BuildDirectory)\temp\jdk8.zip' -DestinationPath $(Agent.BuildDirectory)\temp\openjdk;
+      } elseif("${{ parameters.buildJavaVersion }}" -eq "jdk11u"){
+        # java 10
+        Invoke-WebRequest -UseBasicParsing "https://api.adoptopenjdk.net/v2/binary/releases/openjdk10?openjdk_impl=hotspot&os=windows&arch=x64&release=latest&type=jdk" -OutFile '$(Agent.BuildDirectory)\temp\jdk10.zip';
+        Expand-Archive -LiteralPath '$(Agent.BuildDirectory)\temp\jdk10.zip' -DestinationPath '$(Agent.BuildDirectory)\temp\openjdk';
+      } elseif("${{ parameters.buildJavaVersion }}" -eq "jdk"){
+        # java 12
+        Invoke-WebRequest -UseBasicParsing "https://api.adoptopenjdk.net/v2/binary/releases/openjdk12?openjdk_impl=hotspot&os=windows&arch=x64&release=latest&type=jdk" -OutFile '$(Agent.BuildDirectory)\temp\jdk12.zip';
+        Expand-Archive -LiteralPath '$(Agent.BuildDirectory)\temp\jdk12.zip' -DestinationPath '$(Agent.BuildDirectory)\temp\openjdk';
+      }
+      # java create symbolic link
+      $directories = Get-ChildItem '$(Agent.BuildDirectory)\temp\openjdk\jdk*'
+      foreach ($directory in $directories) {
+        New-Item -ItemType Junction -Path "$(Agent.BuildDirectory)\openjdk" -Target $directory
+      }
+      # install vs2010 for jdk8u
+      if("${{ parameters.buildJavaVersion }}" -eq "jdk8u"){
+        Invoke-WebRequest -UseBasicParsing 'https://download.microsoft.com/download/D/B/C/DBC11267-9597-46FF-8377-E194A73970D6/vs_proweb.exe' -OutFile '$(Agent.BuildDirectory)\temp\vs2010.exe';
+        Start-Process -Wait -FilePath '$(Agent.BuildDirectory)\temp\vs2010.exe' -ArgumentList '/q /norestart';
+      }
+    displayName: "Windows Pre Build: install dependencies"
+
+  - script: |
+      echo ##vso[task.setvariable variable=OPERATING_SYSTEM]windows
+      echo ##vso[task.setvariable variable=JDK_BOOT_DIR]${{ parameters.jdkBootDir }}
+      echo ##vso[task.setvariable variable=JAVA_HOME]${{ parameters.jdkBootDir }}
+      echo ##vso[task.setvariable variable=Path]$(Agent.BuildDirectory)\openjdk\bin;$(Agent.BuildDirectory)\cygwin64\bin;%PATH%
+    displayName: "Windows Pre Build: update os specific environment variables"
+
+  - template: ../pre_build.yml
+    parameters:
+      buildJavaVersion: ${{ parameters.buildJavaVersion }}

@@ -1,30 +1,37 @@
+parameters:
+  buildJavaVersion: ""
+
 steps:
   - checkout: none
 
   - bash: |
       ERR_MESSAGE_MISSING_ENV=''
 
-      if [ -z $(BUILD_JDK_BOOT_VERSION)  ]; then
-        ERR_MESSAGE_MISSING_ENV="Pipeline must set BUILD_JDK_BOOT_VERSION. $ERR_MESSAGE_MISSING_ENV"
+      if [ -z "$JDK_BOOT_DIR" ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set JDK_BOOT_DIR. $ERR_MESSAGE_MISSING_ENV"
       fi;
 
-      if [ -z $(JAVA_SOURCE_REPO_URI)  ]; then
+      if [ -z "$JAVA_HOME" ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set JAVA_HOME. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ -z $(JAVA_SOURCE_REPO_URI) ]; then
         ERR_MESSAGE_MISSING_ENV="Pipeline must set JAVA_SOURCE_REPO_URI. $ERR_MESSAGE_MISSING_ENV"
       fi;
 
-      if [ -z $(BUILD_JAVA_VERSION)  ]; then
+      if [ -z "$BUILD_JAVA_VERSION" ]; then
         ERR_MESSAGE_MISSING_ENV="Pipeline must set BUILD_JAVA_VERSION to jdk8, jdk11, jdk, etc. $ERR_MESSAGE_MISSING_ENV"
       fi;
 
-      if [ -z $(BUILD_DEBUG_LEVEL)  ]; then
+      if [ -z $(BUILD_DEBUG_LEVEL) ]; then
         ERR_MESSAGE_MISSING_ENV="Pipeline must set BUILD_DEBUG_LEVEL to fastdebug, slowdebug, release. $ERR_MESSAGE_MISSING_ENV"
       fi;
 
-      if [ -z $(ADOPT_OPENJDK_BUILD_REPO_URI)  ]; then
+      if [ -z $(ADOPT_OPENJDK_BUILD_REPO_URI) ]; then
         ERR_MESSAGE_MISSING_ENV="Pipeline must set ADOPT_OPENJDK_BUILD_REPO_URI to URI of the openjdk-build repo to use. $ERR_MESSAGE_MISSING_ENV"
       fi;
 
-      if [ -z $(ADOPT_OPENJDK_BUILD_REPO_BRANCH)  ]; then
+      if [ -z $(ADOPT_OPENJDK_BUILD_REPO_BRANCH) ]; then
         ERR_MESSAGE_MISSING_ENV="Pipeline must set ADOPT_OPENJDK_BUILD_REPO_BRANCH to the branch-name of the openjdk-build repo to use. $ERR_MESSAGE_MISSING_ENV"
       fi;
 
@@ -32,6 +39,8 @@ steps:
         echo "##vso[task.logissue type=error;]$ERR_MESSAGE_MISSING_ENV"
         echo "##vso[task.complete result=Failed;]"
       fi;
+    env:
+      BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
     displayName: "Pre Build: check required environment variables"
 
   - script: |
@@ -71,12 +80,7 @@ steps:
       echo "##vso[task.setvariable variable=JAVA_SOURCE_REPO_BRANCH]$JAVA_SOURCE_REPO_BRANCH"
     displayName: "Pre Build: set build source branch"
 
-  - script: |
-      echo ##vso[task.setvariable variable=VARIANT]hotspot
-      echo ##vso[task.setvariable variable=ARCHITECTURE]x64
-    displayName: "Pre Build: set shared environment variables"
-
   - bash: |
-      printenv
-    displayName: "Pre Build: show all env vars"
-    condition: eq(variables['system.debug'], 'true')
+      echo "##vso[task.setvariable variable=VARIANT]hotspot"
+      echo "##vso[task.setvariable variable=ARCHITECTURE]x64"
+    displayName: "Pre Build: set shared environment variables"
