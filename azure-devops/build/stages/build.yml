@@ -11,6 +11,7 @@ stages:
     dependsOn: []
     jobs:
       - job: build_linux
+        timeoutInMinutes: 120
         displayName: "Build Linux"
         condition: or(
           not(variables.BUILD_PLATFORMS),
@@ -35,6 +36,7 @@ stages:
     dependsOn: []
     jobs:
       - job: build_macOS
+        timeoutInMinutes: 120
         displayName: "Build macOS"
         condition: or(
           not(variables.BUILD_PLATFORMS),
@@ -58,6 +60,7 @@ stages:
     dependsOn: []
     jobs:
       - job: build_macOS
+        timeoutInMinutes: 120
         displayName: "Build Windows"
         condition: or(
           not(variables.BUILD_PLATFORMS),

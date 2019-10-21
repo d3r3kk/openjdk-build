@@ -1,0 +1,30 @@
+stages:
+  - stage: test_windows_pr
+    displayName: "Tests Windows PR"
+    condition: and(
+        or(
+          not(variables.TEST_PLATFORMS_AND_STAGES),
+          contains(variables.TEST_PLATFORMS_AND_STAGES, 'Windows.pr')
+        ),
+        succeeded('build_windows_binaries')
+      )
+    dependsOn: build_windows_binaries
+
+    jobs:
+      - job: test_windows_openjdk
+        timeoutInMinutes: 720
+        displayName: "Windows Test OpenJDK"
+        pool:
+          vmImage: vs2017-win2016
+        variables:
+          BUILD_LIST: "openjdk"
+          TEST_TARGET: "_sanity.openjdk"
+          TEST_NAME: "windows openjdk_sanity"
+        steps:
+          - template: ../steps/shared/pre_test.yml
+          - template: ../steps/windows/pre_test.yml
+          - template: ../steps/windows/test.yml
+          - template: ../steps/shared/post_test.yml
+            parameters:
+              testFailTaskOnFailedTests: true
+              testTestResultsFiles: "**/*.jtr.xml"

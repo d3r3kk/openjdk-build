@@ -1,0 +1,61 @@
+steps:
+  - bash: |
+      ERR_MESSAGE_MISSING_ENV=''
+
+      if [ -z "$ANT_HOME" ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set ANT_HOME. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ ! -z "$ERR_MESSAGE_MISSING_ENV" ]; then
+        echo "##vso[task.logissue type=error;]$ERR_MESSAGE_MISSING_ENV"
+        echo "##vso[task.complete result=Failed;]"
+      fi;
+    displayName: "Windows Pre Test: check platform specific required environment variables"
+
+  - powershell: |
+      $ProgressPreference = 'SilentlyContinue';
+      # pre install
+      New-Item -Path $(Agent.BuildDirectory) -Name 'temp' -ItemType 'directory';
+      # cygwin
+      Invoke-WebRequest -UseBasicParsing https://cygwin.com/setup-x86_64.exe -OutFile '$(Agent.BuildDirectory)\temp\cygwin.exe';
+      Start-Process -Wait -FilePath '$(Agent.BuildDirectory)\temp\cygwin.exe' -ArgumentList '--packages wget,bsdtar,git,make,curl,grep,perl,perl-XML-Parser,perl-Text-CSV,perl-JSON --quiet-mode --download --local-install --delete-orphans --site https://mirrors.kernel.org/sourceware/cygwin/ --local-package-dir $(Agent.BuildDirectory)\cygwin_packages --root $(Agent.BuildDirectory)\cygwin64';
+      # ant-contrib
+      Invoke-WebRequest -UseBasicParsing https://managedway.dl.sourceforge.net/project/ant-contrib/ant-contrib/ant-contrib-1.0b2/ant-contrib-1.0b2-bin.zip -OutFile '$(Agent.BuildDirectory)\temp\ant-contrib.zip';
+      Expand-Archive -LiteralPath '$(Agent.BuildDirectory)\temp\ant-contrib.zip' -DestinationPath '$(Agent.BuildDirectory)\temp\ant-contrib';
+      Copy-Item -Path '$(Agent.BuildDirectory)\temp\ant-contrib\ant-contrib\lib\ant-contrib.jar' -Destination "$env:ANT_HOME\lib\ant-contrib.jar";
+      # tap-xunit
+      npm install tap-xunit -g;
+    displayName: "Windows Pre Test: download & install dependencies"
+
+  - script: |
+      echo ##vso[task.setvariable variable=Path]$(Agent.BuildDirectory)\cygwin64\bin;%PATH%
+    displayName: "Windows Pre Test: update os specific environment variables"
+
+  # Create the expected dirs for the JDK/JRE to exist within for the test script and decompress the JDK and JRE into them.
+  # Remove the base-level folders from the JDK and JRE archives to allow us to refer to specific paths rather than the paths built into the archives.
+  - script: |
+      cd $(Pipeline.Workspace)
+      bash.exe -c "mkdir -p ./j2sdk-image"
+      bash.exe -c "mkdir -p ./j2re-image"
+      bash.exe -c "bsdtar --strip-components=1 -xvf *-jdk_*.zip -C ./j2sdk-image"
+      bash.exe -c "bsdtar --strip-components=1 -xvf *-jre_*.zip -C ./j2re-image"
+    displayName: "Windows Pre Test: decompress build pipeline artifact"
+
+  - powershell: |
+      Invoke-WebRequest -UseBasicParsing https://buildreqs.blob.core.windows.net/microsoft/openjdk_test_control.jar -OutFile '$(Agent.BuildDirectory)\temp\openjdk_test_control.jar';
+      $(Pipeline.Workspace)\j2sdk-image\bin\java -jar $(Agent.BuildDirectory)\temp\openjdk_test_control.jar -file $(Build.Repository.LocalPath)\.devops\problemlist.json -directory $(Common.TestResultsDirectory)\openjdk-tests\openjdk -os $(Agent.OS)_$(Agent.OSArchitecture);
+    displayName: "Windows Pre Test: openjdk test inject problem list"
+    condition: and(succeeded(), contains(variables.BUILD_LIST, 'openjdk'))
+
+  # set up environment variables. we need to replace \ by / so that cygwin can resolve path correctly
+  - script: |
+      set COMMON_TESTRESULTSDIRECTORY_UNIX=%COMMON_TESTRESULTSDIRECTORY:\=/%
+      set PIPELINE_WORKSPACE_UNIX=%PIPELINE_WORKSPACE:\=/%
+      set BUILD_REPOSITORY_LOCALPATH_UNIX=%BUILD_REPOSITORY_LOCALPATH:\=/%
+      echo ##vso[task.setvariable variable=OPENJDK_SOURCES]%BUILD_REPOSITORY_LOCALPATH_UNIX%
+      echo ##vso[task.setvariable variable=TEST_JDK_HOME]%PIPELINE_WORKSPACE_UNIX%/j2sdk-image
+      echo ##vso[task.setvariable variable=OPENJDK_BUILD]%PIPELINE_WORKSPACE_UNIX%/j2sdk-image
+      echo ##vso[task.setvariable variable=TEST_DIR]%COMMON_TESTRESULTSDIRECTORY_UNIX%/openjdk-tests
+      echo ##vso[task.setvariable variable=JRE_IMAGE]%PIPELINE_WORKSPACE_UNIX%/j2re-image
+      echo ##vso[task.setvariable variable=BUILD_ROOT]%COMMON_TESTRESULTSDIRECTORY_UNIX%/openjdk-tests/test-result
+    displayName: "Windows Pre Test: update os specific test environment variables"

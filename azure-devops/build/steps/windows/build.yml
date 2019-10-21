@@ -25,7 +25,7 @@ steps:
         set EXTRA_CONFIGURE_ARGS=--disable-warnings-as-errors
         set EXTRA_OPTION=
       )
-      bash.exe -c "./makejdk-any-platform.sh --adoptopenjdk-build-repo $(ADOPT_OPENJDK_BUILD_REPO_URI) --repository $(JAVA_SOURCE_REPO_URI) --branch %JAVA_SOURCE_REPO_BRANCH% -J %JDK_BOOT_DIR% --configure-args '%EXTRA_CONFIGURE_ARGS% --with-debug-level=$(BUILD_DEBUG_LEVEL) --with-toolchain-version=%TOOLCHAIN_VERSION%' -d artifacts --target-file-name microsoft-jdk_$(Agent.OSArchitecture)_$(Agent.OS)_hotspot-$(BUILD_DEBUG_LEVEL)_$(Build.BuildId).tar.gz --no-adopt-patches --disable-adopt-branch-safety %EXTRA_OPTION% ${{ parameters.buildJavaVersion }}"
+      bash.exe -c "./makejdk-any-platform.sh --adoptopenjdk-build-repo $(ADOPT_OPENJDK_BUILD_REPO_URI) --repository $(JAVA_SOURCE_REPO_URI) --branch %JAVA_SOURCE_REPO_BRANCH% -J %JDK_BOOT_DIR% --configure-args '%EXTRA_CONFIGURE_ARGS% --with-debug-level=$(BUILD_DEBUG_LEVEL) --with-toolchain-version=%TOOLCHAIN_VERSION%' -d artifacts --target-file-name microsoft-jdk_$(Agent.OSArchitecture)_$(Agent.OS)_hotspot-$(BUILD_DEBUG_LEVEL)_$(Build.BuildId).zip --no-adopt-patches --disable-adopt-branch-safety %EXTRA_OPTION% ${{ parameters.buildJavaVersion }}"
     displayName: "Windows Build: start makejdk-any-platform process"
 
   # Upload the produced JDK/JRE binary to the build artifact service.

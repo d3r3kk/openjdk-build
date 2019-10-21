@@ -54,7 +54,7 @@ steps:
   # Set the git authorization header for subsequent git pull/clone operations...
   # <This step is unnecessary on your local workstation, can be approximated by using SSH URIs>
   - bash: |
-      git config --global --add http.extraheader "AUTHORIZATION: bearer $(System.AccessToken)"
+      git config --global --add http.https://dev.azure.com.extraheader "AUTHORIZATION: bearer $(System.AccessToken)"
     displayName: "Pre Build: add auth header"
 
   # Checkout the sources for the OpenJDK-11-updates repo (save the makejdk script from doing this later)

@@ -1,0 +1,27 @@
+steps:
+  # Create the expected dirs for the JDK/JRE to exist within for the test script and decompress the JDK and JRE into them.
+  # Remove the base-level folders from the JDK and JRE archives to allow us to refer to specific paths rather than the paths built into the archives.
+  - bash: |
+      cd $(Pipeline.Workspace)
+      mkdir -p ./j2sdk-image
+      mkdir -p ./j2re-image
+      tar -xzf *-jdk_*.tar.gz -C /$(Pipeline.Workspace)/j2sdk-image --strip-components=1
+      tar -xzf *-jre_*.tar.gz -C /$(Pipeline.Workspace)/j2re-image --strip-components=1
+    displayName: "Linux Pre Test: decompress build pipeline artifact"
+
+  - bash: |
+      wget -O /tmp/openjdk_test_control.jar https://buildreqs.blob.core.windows.net/microsoft/openjdk_test_control.jar
+      $(Pipeline.Workspace)/j2sdk-image/bin/java -jar /tmp/openjdk_test_control.jar -file $(Build.Repository.LocalPath)/.devops/problemlist.json -directory $(Common.TestResultsDirectory)/openjdk-tests/openjdk -os $(Agent.OS)_$(Agent.OSArchitecture);
+    displayName: "Linux Pre Test: openjdk test inject problem list"
+    condition: and(succeeded(), contains(variables.BUILD_LIST, 'openjdk'))
+
+  # set up environment variables. we need to replace \ by / so that cygwin can resolve path correctly
+  - bash: |
+      echo "##vso[task.setvariable variable=DISPLAY]:1";
+      echo "##vso[task.setvariable variable=OPENJDK_SOURCES]$BUILD_REPOSITORY_LOCALPATH";
+      echo "##vso[task.setvariable variable=TEST_JDK_HOME]$PIPELINE_WORKSPACE/j2sdk-image";
+      echo "##vso[task.setvariable variable=OPENJDK_BUILD]$PIPELINE_WORKSPACE/j2sdk-image";
+      echo "##vso[task.setvariable variable=TEST_DIR]$COMMON_TESTRESULTSDIRECTORY/openjdk-tests"
+      echo "##vso[task.setvariable variable=JRE_IMAGE]$PIPELINE_WORKSPACE/j2re-image";
+      echo "##vso[task.setvariable variable=BUILD_ROOT]$COMMON_TESTRESULTSDIRECTORY/openjdk-tests/test-result";
+    displayName: "Linux Pre Test: update os specific test environment variables"

@@ -1,0 +1,9 @@
+parameters:
+  linuxContainer: ""
+
+stages:
+  - template: ./windows_pr.yml
+  - template: ./macOS_pr.yml
+  - template: ./linux_pr.yml
+    parameters:
+      linuxContainer: ${{ parameters.linuxContainer }}

@@ -1,0 +1,39 @@
+steps:
+  # create symbolic link, map openjdk source to the test framework folder
+  - bash: |
+      cd $TEST_DIR
+      ln -s $OPENJDK_SOURCES ./openjdk/openjdk-jdk
+    displayName: "macOS Test: create symbolic link"
+
+  # Get openj9 test framework
+  - bash: |
+      cd $TEST_DIR
+      ./get.sh --openj9_repo $(OPENJ9_REPO_URI) --openj9_branch $(OPENJ9_REPO_BRANCH) -t $TEST_DIR
+    displayName: "macOS Test: get openj9 test framework"
+
+  # update test suites playlist.xml files
+  # the test suites in $CUSTOMIZED_TESTS is split by "|"
+  # the path to playlist.xml file and test name is split by ":"
+  # reference: https://stackoverflow.com/a/918931
+  - bash: |
+      cd $TEST_DIR
+      while IFS='|' read -ra TESTS; do
+          for i in "${TESTS[@]}"; do
+              IFS=':' read -ra TEST <<< "$i"
+              xmlstarlet ed -L --subnode "//playlist/test[testCaseName = '"${TEST[1]}"']/levels" -t elem -n level -v "individual" "./${TEST[0]}/playlist.xml"
+          done
+      done <<< "$CUSTOMIZED_TESTS"
+    condition: and(succeeded(), ne(variables['CUSTOMIZED_TESTS'], ''))
+    displayName: "macOS Test: update playlist.xml files"
+
+  # Build test suites
+  - bash: |
+      cd $TEST_DIR
+      ./maketest.sh $TEST_DIR
+    displayName: "macOS Test: build test suites"
+
+  # Run test suites
+  - bash: |
+      cd $TEST_DIR
+      OPENJDK_DIR=$OPENJDK_SOURCES ./maketest.sh $TEST_DIR $TEST_TARGET
+    displayName: "Linux Test: execute test suites"
