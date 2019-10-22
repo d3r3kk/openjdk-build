@@ -1,9 +1,30 @@
 parameters:
   linuxContainer: ""
+  buildJavaVersion: ""
 
 stages:
-  - template: ./windows_pr.yml
-  - template: ./macOS_pr.yml
   - template: ./linux_pr.yml
     parameters:
       linuxContainer: ${{ parameters.linuxContainer }}
+      buildJavaVersion: ${{ parameters.buildJavaVersion }}
+
+  - template: ./linux_ci.yml
+    parameters:
+      linuxContainer: ${{ parameters.linuxContainer }}
+
+  - template: ./linux_nightly.yml
+    parameters:
+      linuxContainer: ${{ parameters.linuxContainer }}
+      buildJavaVersion: ${{ parameters.buildJavaVersion }}
+
+  - template: ./windows_pr.yml
+    parameters:
+      buildJavaVersion: ${{ parameters.buildJavaVersion }}
+
+  - template: ./windows_ci.yml
+
+  - template: ./macOS_pr.yml
+    parameters:
+      buildJavaVersion: ${{ parameters.buildJavaVersion }}
+
+  - template: ./macOS_ci.yml

@@ -1,0 +1,35 @@
+parameters:
+  linuxContainer: ""
+  buildJavaVersion: ""
+
+stages:
+  - stage: test_linux_ci
+    displayName: "Test Linux CI"
+    condition: and(
+        or(
+          not(variables.TEST_PLATFORMS_AND_STAGES),
+          contains(variables.TEST_PLATFORMS_AND_STAGES, 'Linux.ci')
+        ),
+        succeeded('build_linux_binaries')
+      )
+    dependsOn: build_linux_binaries
+
+    jobs:
+      - job: test_linux_ci_system
+        timeoutInMinutes: 120
+        displayName: "Test Linux CI System"
+        pool:
+          vmImage: ubuntu-16.04
+        container: ${{ parameters.linuxContainer }}
+        variables:
+          BUILD_LIST: "system"
+          TEST_TARGET: "_extended.system"
+          TEST_NAME: "linux ci system_extended"
+        steps:
+          - template: ../steps/shared/pre_test.yml
+          - template: ../steps/linux/pre_test.yml
+          - template: ../steps/linux/test.yml
+          - template: ../steps/shared/post_test.yml
+            parameters:
+              testFailTaskOnFailedTests: true
+              testTestResultsFiles: "**/*.tap.xml"

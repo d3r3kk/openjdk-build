@@ -2,6 +2,7 @@ parameters:
   buildJavaVersion: ""
   macOSBootJDKUri: ""
   jdkBootDir: "/tmp/openjdk"
+  javaHomeDir: "/tmp/java"
 
 steps:
   - script: |
@@ -10,6 +11,9 @@ steps:
 
   - script: |
       mkdir -p ${{ parameters.jdkBootDir }}
+      mkdir -p ${{ parameters.javaHomeDir }}
+      wget -O /tmp/openjdk8.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk8?openjdk_impl=hotspot&os=mac&arch=x64&release=latest&type=jdk"
+      tar -xzf /tmp/openjdk8.tar.gz --strip-components=3 -C ${{ parameters.javaHomeDir }}
       if [ "${{ parameters.macOSBootJDKUri }}" != "" ]
       then
           wget -O /tmp/openjdk.tar.gz "${{ parameters.macOSBootJDKUri }}"
@@ -21,7 +25,7 @@ steps:
           wget -O /tmp/openjdk.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk10?openjdk_impl=hotspot&os=mac&arch=x64&release=latest&type=jdk"
       elif [ "${{ parameters.buildJavaVersion }}" == "jdk" ]
       then
-          wget -O /tmp/openjdk.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk12?openjdk_impl=hotspot&os=mac&arch=x64&release=latest&type=jdk"
+          wget -O /tmp/openjdk.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk13?openjdk_impl=hotspot&os=mac&arch=x64&release=latest&type=jdk"
       fi
       tar -xzf /tmp/openjdk.tar.gz --strip-components=3 -C ${{ parameters.jdkBootDir }}
     displayName: "macOS Pre Build: download and install adopt openjdk boot jdk"
@@ -29,7 +33,7 @@ steps:
   - script: |
       echo "##vso[task.setvariable variable=OPERATING_SYSTEM]macOS"
       echo "##vso[task.setvariable variable=JDK_BOOT_DIR]${{ parameters.jdkBootDir }}"
-      echo "##vso[task.setvariable variable=JAVA_HOME]${{ parameters.jdkBootDir }}"
+      echo "##vso[task.setvariable variable=JAVA_HOME]${{ parameters.javaHomeDir }}"
       echo "##vso[task.setvariable variable=PATH]${{ parameters.jdkBootDir }}/bin;$PATH"
     displayName: "macOS Pre Build: set environment variables"
 

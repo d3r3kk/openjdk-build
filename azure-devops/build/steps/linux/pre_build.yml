@@ -9,10 +9,10 @@ steps:
       case "${{ parameters.buildJavaVersion }}" in
             "jdk8u")    JDK_BOOT_DIR="$JDK7_BOOT_DIR";;
             "jdk11u")   JDK_BOOT_DIR="$JDK10_BOOT_DIR";;
-            "jdk")      JDK_BOOT_DIR="$JDK12_BOOT_DIR";;
+            "jdk")      JDK_BOOT_DIR="$JDK13_BOOT_DIR";;
       esac
       echo "##vso[task.setvariable variable=JDK_BOOT_DIR]$JDK_BOOT_DIR"
-      echo "##vso[task.setvariable variable=JAVA_HOME]$JDK_BOOT_DIR"
+      echo "##vso[task.setvariable variable=JAVA_HOME]$JDK8_BOOT_DIR"
       echo "##vso[task.setvariable variable=PATH]$JDK_BOOT_DIR;$PATH"
     displayName: "Linux Pre Build: set os specific environment variables"
 
