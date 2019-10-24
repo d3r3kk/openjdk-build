@@ -10,7 +10,7 @@ doInit="false"
 doReset="false"
 doTagging="false"
 doUpdate="false"
-hgRepo="https://hg.openjdk.java.net/jdk8u/jdk8u"
+hgRepo="https://hg.openjdk.java.net/shenandoah/jdk8"
 tag="jdk8u172-b08"
 workingBranch="master"
 

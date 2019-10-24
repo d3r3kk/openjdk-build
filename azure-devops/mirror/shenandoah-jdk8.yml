@@ -1,0 +1,119 @@
+name: "$(Year:yyyy).$(Month).0.$(BuildID)-mirror"
+
+trigger: none
+
+pr: none
+
+schedules:
+  # Convert the UTC time to VNC time, so 7AM UTC is 12PM Vancouver time
+  # We run this every Tuesday
+  - cron: "0 7 * * *"
+    displayName: Nightly
+    always: true
+    branches:
+      include:
+        - juniper
+
+jobs:
+  - job: mirror
+    displayName: "Nightly Mirror Job"
+    pool:
+      vmImage: ubuntu-16.04
+
+    steps:
+      - bash: |
+          mkdir -vp /opt/git-hg
+          wget -O "/opt/git-hg/git-remote-hg" "https://raw.githubusercontent.com/mnauw/git-remote-hg/master/git-remote-hg"
+          chmod ugo+x /opt/git-hg/git-remote-hg
+        displayName: "install git-remote-hg"
+
+      - bash: |
+          echo "##vso[task.setvariable variable=PATH]/opt/git-hg:${PATH}"
+        displayName: "update PATH"
+
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: "3.8.0"
+
+      - checkout: self
+        fetchDepth: 1
+
+      - bash: |
+          echo "##vso[task.setvariable variable=UPSTREAM_GIT_REPO]https://ms-juniper@dev.azure.com/ms-juniper/Juniper/_git/shenandoah-jdk8"
+        displayName: "set UPSTREAM_GIT_REPO"
+
+      - bash: |
+          git config --global --add http.https://dev.azure.com.extraheader "AUTHORIZATION: bearer $(System.AccessToken)"
+          git config remote.root.url hg::https://hg.openjdk.java.net/shenandoah/jdk8
+          git config remote.upstream.url https://ms-juniper@dev.azure.com/ms-juniper/Juniper/_git/shenandoah-jdk8
+          git config --global core.autocrlf input
+          git config --global user.email "juniperinfra@microsoft.com"
+          git config --global user.name "Juniper Mirror - $BUILD_DEFINITIONNAME"
+        env:
+          BUILD_DEFINITIONNAME: $(Build.DefinitionName)
+        displayName: "update git configuration"
+
+      - task: Cache@2
+        inputs:
+          key: '"$(Agent.OS)"'
+          path: $(Build.SourcesDirectory)/git-hg/jdk8u/workspace/openjdk-clean-mirror
+        displayName: "load clean git hg repo cache"
+
+      - bash: |
+          cd ./git-hg/jdk8u
+          bash ./merge.sh -l
+        displayName: "init mirroring"
+
+      - bash: |
+          cd ./git-hg/jdk8u
+          set -eux
+          source constants.sh
+          cd $REPO
+          git checkout -b upstream_master upstream/upstream_master
+          cd $SCRIPT_DIR
+          bash ./merge.sh -T "HEAD" -b "upstream_master"
+          echo "##vso[task.setvariable variable=UPSTREAM_GIT_SHA1]$(git rev-parse --short HEAD)"
+        displayName: "update upstream_master"
+
+      - bash: |
+          cd ./git-hg/jdk8u
+          set -eux
+          source constants.sh
+          cd $REPO
+          git checkout master
+          echo "##vso[task.setvariable variable=SOURCE_GIT_SHA1]$(git rev-parse --short HEAD)"
+          cd $SCRIPT_DIR
+          bash ./merge.sh -T "HEAD" -b "master"
+          echo "##vso[task.setvariable variable=MERGE_GIT_SHA1]$(git rev-parse --short HEAD)"
+        displayName: "update master"
+
+      - bash: |
+          echo "##vso[task.setvariable variable=PR_BRANCH]pr_base_${SOURCE_GIT_SHA1}_upstream_${UPSTREAM_GIT_SHA1}"
+        displayName: "set MERGE_GIT_SHA1"
+
+      - bash: |
+          cd ./git-hg/jdk8u
+          set -eux
+          source constants.sh
+          cd $REPO
+          git checkout master -b ${PR_BRANCH}
+          git push upstream ${PR_BRANCH}
+          git push upstream upstream_master
+          git push upstream --tags
+        displayName: "push pr branch and tags to upstream"
+
+      - bash: |
+          python -m pip install -r ./azure-devops/mirror/scripts/requirements.txt
+        displayName: "pip install dependencies"
+
+      - bash: |
+          python ./azure-devops/mirror/scripts/main_pr.py --pr_branch ${PR_BRANCH} --upstream_sha1 ${UPSTREAM_GIT_SHA1} --base_sha1 ${SOURCE_GIT_SHA1} --pat $(PAT) --organization_url $(ORGANIZATION_URL) --project_id ${PROJECT_ID} --repository $(REPOSITORY)
+        displayName: "python run script"
+        env:
+          PAT: $(PAT)
+          PROJECT_ID: $(System.TeamProjectId)
+
+      - script: |
+          git config --global --unset http.https://dev.azure.com.extraheader
+        displayName: "Post Build: remove git auth header(s)"
+        condition: always()
