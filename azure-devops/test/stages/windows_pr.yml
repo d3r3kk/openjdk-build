@@ -32,26 +32,6 @@ stages:
               testFailTaskOnFailedTests: true
               testTestResultsFiles: "**/*.jtr.xml"
 
-      - ${{ if or(eq(parameters.buildJavaVersion, 'jdk8u'), eq(parameters.buildJavaVersion, 'jdk11u')) }}:
-
-        - job: test_windows_pr_perf
-          timeoutInMinutes: 720
-          displayName: "Test Windows PR Perf"
-          pool:
-            vmImage: vs2017-win2016
-          variables:
-            BUILD_LIST: "perf"
-            TEST_TARGET: "_sanity.perf"
-            TEST_NAME: "windows pr perf_sanity"
-          steps:
-            - template: ../steps/shared/pre_test.yml
-            - template: ../steps/windows/pre_test.yml
-            - template: ../steps/windows/test.yml
-            - template: ../steps/shared/post_test.yml
-              parameters:
-                testFailTaskOnFailedTests: true
-                testTestResultsFiles: "**/*.tap.xml"
-
       - job: test_windows_pr_system
         timeoutInMinutes: 720
         displayName: "Test Windows PR System"
