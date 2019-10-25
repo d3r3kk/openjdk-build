@@ -4,9 +4,9 @@
 # repos into child repos
 
 # The reference AdoptOpenJDK repos
-export ADOPT_REPO_PATH=https://github.com/AdoptOpenJDK
+export ADOPT_REPO_PATH=git@github.com:AdoptOpenJDK
 # This script could be made to sync any child by passing this in as an arg
-export CHILD_REPO_PATH=https://github.com/freebsd
+export CHILD_REPO_PATH=git@github.com:freebsd
 # Branch to be synchronised
 # Note: the dev branch is the branch that AdoptOpenJDK builds from
 export SYNC_BRANCH=dev
@@ -21,6 +21,7 @@ usage() {
 initRepo() {
 	if [ -d ${REPO} ]; then
 		cd ${REPO}
+		git pull || exit 1
 		git reset --hard origin/${SYNC_BRANCH} || exit 1
 	else
 		git clone ${CHILD_REPO_PATH}/${REPO}.git || exit 1
@@ -53,6 +54,7 @@ mergeRepo() {
 
 # Push
 pushMerge() {
+	git push || exit 1
 	git push --tags || exit 1
 }
 
