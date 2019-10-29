@@ -84,3 +84,21 @@ steps:
       echo "##vso[task.setvariable variable=VARIANT]hotspot"
       echo "##vso[task.setvariable variable=ARCHITECTURE]x64"
     displayName: "Pre Build: set shared environment variables"
+
+  - bash: |
+      if [ "$BUILD_HSDIS_DIR" != "" ]
+      then
+          echo "##vso[task.setvariable variable=BUILD_HSDIS_DIR]$BUILD_HSDIS_DIR"
+      else
+          TEMP=
+          case "${{ parameters.buildJavaVersion }}" in
+            "jdk8u")
+                    TEMP="$(Build.SourcesDirectory)/workspace/build/src/hotspot/src/share/tools/hsdis"
+                    ;;
+            *)
+                    TEMP="$(Build.SourcesDirectory)/workspace/build/src/src/utils/hsdis"
+                    ;;
+          esac
+          echo "##vso[task.setvariable variable=BUILD_HSDIS_DIR]$TEMP"
+      fi
+    displayName: "Pre Build: set hsdis dir environment variables"

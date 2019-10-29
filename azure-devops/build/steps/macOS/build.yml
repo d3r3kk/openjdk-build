@@ -29,3 +29,18 @@ steps:
       artifactName: $(Agent.OS)_$(Agent.OSArchitecture)
       targetPath: "workspace/artifacts"
     displayName: "macOS Build: upload JKD/JRE artifact"
+
+  - script: |
+      cd $BUILD_HSDIS_DIR
+      wget https://buildreqs.blob.core.windows.net/binutils/binutils-2.30.tar.gz
+      tar -xzf binutils-2.30.tar.gz
+      make BINUTILS=binutils-2.30 ARCH=amd64
+    displayName: "macOS Build: create hsdis shared object"
+    condition: and(succeeded(), contains(variables.HSDIS_BUILD_PLATFORMS, 'macOS'))
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      artifactName: "$(Agent.OS)_$(Agent.OSArchitecture)_hsdis"
+      targetPath: "$(BUILD_HSDIS_DIR)/build/macosx-amd64/hsdis-amd64.dylib"
+    displayName: "macOS Build: upload hsdis artifact"
+    condition: and(succeeded(), contains(variables.HSDIS_BUILD_PLATFORMS, 'macOS'))

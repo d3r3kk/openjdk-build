@@ -30,3 +30,16 @@ steps:
       artifactName: $(Agent.OS)_$(Agent.OSArchitecture)
       targetPath: "workspace/artifacts"
     displayName: "Linux Build: upload JKD/JRE artifact"
+
+  - script: |
+      cd $BUILD_HSDIS_DIR
+      make BINUTILS=$HSDIS_BINUTILS_PATH ARCH=amd64
+    displayName: "Linux Build: create hsdis shared object"
+    condition: and(succeeded(), contains(variables.HSDIS_BUILD_PLATFORMS, 'Linux'))
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      artifactName: "$(Agent.OS)_$(Agent.OSArchitecture)_hsdis"
+      targetPath: "$(BUILD_HSDIS_DIR)/build/linux-amd64/hsdis-amd64.so"
+    displayName: "Linux Build: upload hsdis artifact"
+    condition: and(succeeded(), contains(variables.HSDIS_BUILD_PLATFORMS, 'Linux'))

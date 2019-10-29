@@ -34,3 +34,16 @@ steps:
       artifactName: $(Agent.OS)_$(Agent.OSArchitecture)
       targetPath: "workspace/artifacts"
     displayName: "Windows Build: update JKD/JRE artifact"
+
+  - script: |
+      cd %BUILD_HSDIS_DIR%
+      bash.exe -c "wget https://buildreqs.blob.core.windows.net/binutils/binutils-2.32.tar.xz && tar xvf binutils-2.32.tar.xz && make OS=Linux MINGW=x86_64-w64-mingw32 BINUTILS=binutils-2.32"
+    displayName: "Windows Build: create hsdis shared object"
+    condition: and(succeeded(), contains(variables.HSDIS_BUILD_PLATFORMS, 'Windows'))
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      artifactName: "$(Agent.OS)_$(Agent.OSArchitecture)_hsdis"
+      targetPath: "$(BUILD_HSDIS_DIR)/build/Linux-amd64/hsdis-amd64.dll"
+    displayName: "Windows Build: upload hsdis artifact"
+    condition: and(succeeded(), contains(variables.HSDIS_BUILD_PLATFORMS, 'Windows'))
