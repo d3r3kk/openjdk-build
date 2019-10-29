@@ -4,6 +4,8 @@ parameters:
   macOSBootJDKUri: ""
   windowsBootJDKUri: ""
   buildJavaVersion: ""
+  buildJavaVariant: "hotspot"
+  buildJavaConfigure: ""
 
 stages:
   - stage: build_linux_binaries
@@ -29,6 +31,8 @@ stages:
           - template: ../steps/linux/build.yml
             parameters:
               buildJavaVersion: ${{ parameters.buildJavaVersion }}
+              buildJavaVariant: ${{ parameters.buildJavaVariant }}
+              buildJavaConfigure: ${{ parameters.buildJavaConfigure }}
           - template: ../steps/post_build.yml
 
   - stage: build_macOS_binaries
@@ -53,6 +57,8 @@ stages:
           - template: ../steps/macOS/build.yml
             parameters:
               buildJavaVersion: ${{ parameters.buildJavaVersion }}
+              buildJavaVariant: ${{ parameters.buildJavaVariant }}
+              buildJavaConfigure: ${{ parameters.buildJavaConfigure }}
           - template: ../steps/post_build.yml
 
   - stage: build_windows_binaries
@@ -77,4 +83,6 @@ stages:
           - template: ../steps/windows/build.yml
             parameters:
               buildJavaVersion: ${{ parameters.buildJavaVersion }}
+              buildJavaVariant: ${{ parameters.buildJavaVariant }}
+              buildJavaConfigure: ${{ parameters.buildJavaConfigure }}
           - template: ../steps/post_build.yml

@@ -1,5 +1,7 @@
 parameters:
   buildJavaVersion: ""
+  buildJavaVariant: "hotspot"
+  buildJavaConfigure: ""
   alsaUri: "https://buildreqs.blob.core.windows.net/alsa/alsa-lib-1.1.6.tar.bz2"
 
 steps:
@@ -20,6 +22,8 @@ steps:
         --target-file-name microsoft-jdk_$(Agent.OSArchitecture)_$(Agent.OS)_hotspot-$(BUILD_DEBUG_LEVEL)_$(Build.BuildId).tar.gz  \
         --alsa-tarball-uri ${{ parameters.alsaUri }} \
         --no-adopt-patches \
+        ${{ parameters.buildJavaConfigure }} \
+        --build-variant ${{ parameters.buildJavaVariant }} \
         --disable-adopt-branch-safety \
         ${{ parameters.buildJavaVersion }}
     displayName: "Linux Build: start makejdk-any-platform process"
