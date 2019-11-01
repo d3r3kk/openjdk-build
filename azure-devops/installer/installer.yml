@@ -1,0 +1,18 @@
+stages:
+  - stage: installer_windows
+    displayName: "Installer Windows"
+    condition: and(
+        or(
+          not(variables.INSTALLER_PLATFORMS),
+          contains(variables.INSTALLER_PLATFORMS, 'Windows')
+        ),
+        succeeded('build_windows_binaries')
+      )
+    dependsOn: build_windows_binaries
+    jobs:
+      - job: installer_windows
+        displayName: "Installer Windows"
+        pool:
+          vmImage: windows-latest
+        steps:
+          - template: ./steps/windows/installer.yml

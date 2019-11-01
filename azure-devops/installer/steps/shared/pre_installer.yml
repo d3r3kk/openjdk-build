@@ -1,0 +1,53 @@
+steps:
+  - checkout: none
+
+  - bash: |
+      if [ -z "$ADOPT_OPENJDK_INSTALLER_REPO_URI" ]; then
+        echo "##vso[task.setvariable variable=ADOPT_OPENJDK_INSTALLER_REPO_URI]https://github.com/AdoptOpenJDK/openjdk-installer.git"
+      fi;
+      if [ -z "$ADOPT_OPENJDK_INSTALLER_REPO_BRANCH" ]; then
+        echo "##vso[task.setvariable variable=ADOPT_OPENJDK_INSTALLER_REPO_BRANCH]master"
+      fi;
+
+      ERR_MESSAGE_MISSING_ENV=''
+      if [ -z "$PRODUCT_MAJOR_VERSION" ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set PRODUCT_MAJOR_VERSION. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+      if [ -z "$PRODUCT_MINOR_VERSION" ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set PRODUCT_MINOR_VERSION. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+      if [ -z $(PRODUCT_MAINTENANCE_VERSION) ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set PRODUCT_MAINTENANCE_VERSION. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+      if [ -z "$PRODUCT_PATCH_VERSION" ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set PRODUCT_PATCH_VERSION. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+      if [ ! -z "$ERR_MESSAGE_MISSING_ENV" ]; then
+        echo "##vso[task.logissue type=error;]$ERR_MESSAGE_MISSING_ENV"
+        echo "##vso[task.complete result=Failed;]"
+      fi;
+    displayName: "Pre Installer: check and inialize default env variables"
+
+  - bash: |
+      echo "##vso[task.setvariable variable=HOME]$(Agent.BuildDirectory)"
+    displayName: "Pre Installer: git set HOME env"
+
+  - bash: |
+      git config --global core.autocrlf input
+    displayName: "Pre Installer: git set crlf option"
+
+  # Set the git authorization header for subsequent git pull/clone operations...
+  # <This step is unnecessary on your local workstation, can be approximated by using SSH URIs>
+  - bash: |
+      git config --global --add http.https://dev.azure.com.extraheader "AUTHORIZATION: bearer $(System.AccessToken)"
+    displayName: "Pre Installer: git set auth header"
+
+  # clone openjdk-installer repo
+  - bash: |
+      git clone --single-branch --branch "$(ADOPT_OPENJDK_INSTALLER_REPO_BRANCH)" --depth 1 "$(ADOPT_OPENJDK_INSTALLER_REPO_URI)" "$(Build.SourcesDirectory)"
+    displayName: "Pre Installer: git clone openjdk-tests repo"
+
+  - bash: |
+      printenv
+    displayName: "Pre Installer: show all env vars"
+    condition: eq(variables['system.debug'], 'true')

@@ -1,0 +1,40 @@
+steps:
+  - template: ../shared/pre_installer.yml
+
+  # download JDK/JRE artifact
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      buildType: "current"
+      artifactName: $(Agent.OS)_$(Agent.OSArchitecture)
+      itemPattern: "**"
+      targetPath: "wix/SourceDir"
+    displayName: "Windows Installer: download JDK/JRE artifact"
+
+  - powershell: |
+      cd wix\SourceDir\
+      .\CreateSourceFolder.AdoptOpenJDK.ps1
+    displayName: "Windows Installer: extract files"
+
+  - script: |
+      cd wix
+      SET ARCH=x64
+      SET JVM=hotspot
+      SET PRODUCT_CATEGORY=jdk
+      cmd /c Build.OpenJDK_generic.cmd
+    displayName: "Windows Installer: create JDK installer"
+
+  - script: |
+      cd wix
+      SET ARCH=x64
+      SET JVM=hotspot
+      SET PRODUCT_CATEGORY=jre
+      cmd /c Build.OpenJDK_generic.cmd
+    displayName: "Windows Installer: create JRE installer"
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      artifactName: $(Agent.OS)_$(Agent.OSArchitecture)_installer
+      targetPath: "wix/ReleaseDir"
+    displayName: "Windows Installer: update JKD/JRE artifact"
+
+  - template: ../shared/post_installer.yml
