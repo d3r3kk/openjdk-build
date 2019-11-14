@@ -10,15 +10,22 @@ steps:
     displayName: "macOS Build: show all env vars"
     condition: eq(variables['system.debug'], 'true')
 
+  - bash: |
+      mkdir -p $(Agent.BuildDirectory)/openjdk-build/workspace/build
+      ln -s $(Build.SourcesDirectory) $(Agent.BuildDirectory)/openjdk-build/workspace/build/src
+    displayName: "Linux Build: create symbolic link"
+
   - script: |
+      cd $(Agent.BuildDirectory)/openjdk-build
       ./makejdk-any-platform.sh \
         --adoptopenjdk-build-repo $(ADOPT_OPENJDK_BUILD_REPO_URI) \
         -J "${JDK_BOOT_DIR}" \
         --repository $(JAVA_SOURCE_REPO_URI) \
         --branch "${JAVA_SOURCE_REPO_BRANCH}" \
+        --disable-shallow-git-clone \
         --configure-args "--with-debug-level=$(BUILD_DEBUG_LEVEL)" \
         -d artifacts \
-        --target-file-name microsoft-jdk_$(Agent.OSArchitecture)_$(Agent.OS)_hotspot-$(BUILD_DEBUG_LEVEL)_$(Build.BuildId).tar.gz \
+        --target-file-name $(OPENJDK_OUTPUT_FILE_PREFIX)-macosx-x64.tar.gz \
         --alsa-tarball-uri ${{ parameters.alsaUri }} \
         --no-adopt-patches \
         ${{ parameters.buildJavaConfigure }} \
@@ -31,7 +38,7 @@ steps:
   - task: PublishPipelineArtifact@1
     inputs:
       artifactName: $(Agent.OS)_$(Agent.OSArchitecture)
-      targetPath: "workspace/artifacts"
+      targetPath: "$(Agent.BuildDirectory)/openjdk-build/workspace/artifacts"
     displayName: "macOS Build: upload JKD/JRE artifact"
 
   - script: |

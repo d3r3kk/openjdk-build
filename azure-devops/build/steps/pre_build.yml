@@ -2,8 +2,6 @@ parameters:
   buildJavaVersion: ""
 
 steps:
-  - checkout: none
-
   - bash: |
       ERR_MESSAGE_MISSING_ENV=''
 
@@ -51,6 +49,8 @@ steps:
       git config --global core.autocrlf input
     displayName: "Pre Build: configure crlf option"
 
+  - checkout: self
+
   # Set the git authorization header for subsequent git pull/clone operations...
   # <This step is unnecessary on your local workstation, can be approximated by using SSH URIs>
   - bash: |
@@ -60,7 +60,7 @@ steps:
   # Checkout the sources for the OpenJDK-11-updates repo (save the makejdk script from doing this later)
   # Note: Ensure the JUNIPER_BUILD_BRANCH is set to a valid default.
   - bash: |
-      git clone --single-branch --branch $(ADOPT_OPENJDK_BUILD_REPO_BRANCH) --depth 1 $(ADOPT_OPENJDK_BUILD_REPO_URI) "$(Build.SourcesDirectory)"
+      git clone --single-branch --branch $(ADOPT_OPENJDK_BUILD_REPO_BRANCH) --depth 1 $(ADOPT_OPENJDK_BUILD_REPO_URI) "$(Agent.BuildDirectory)/openjdk-build"
     displayName: "Pre Build: checkout openjdk-build"
 
   - bash: |
@@ -84,6 +84,31 @@ steps:
       echo "##vso[task.setvariable variable=VARIANT]hotspot"
       echo "##vso[task.setvariable variable=ARCHITECTURE]x64"
     displayName: "Pre Build: set shared environment variables"
+
+  - bash: |
+      git fetch --tags
+      rev=$(git rev-list --tags --topo-order --max-count=100)
+      tag=$(git describe --tags $rev | grep jdk | grep -v openj9 | grep -v _adopt | grep -v "\-ga" | head -1)
+      # this may not find the correct tag if there are multiples on the commit so find commit
+      # that contains this tag and then use `git tag` to find the real tag
+      rev=$(git rev-list -n 1 $tag --)
+      tag=$(git tag --points-at $rev | grep -v "\-ga" | tail -1)
+      echo "##vso[task.setvariable variable=OPENJDK_TAG]$tag"
+    displayName: "Pre Build: set hg tag"
+
+  - bash: |
+      build=${OPENJDK_TAG##*+}
+      TEMP=$OPENJDK_TAG
+      TEMP=${TEMP%%+*}
+      version=${TEMP##*-}
+      size=$(echo $version | tr -cd '.' | wc -c)
+      while [ $size -lt 2 ]
+      do
+        version="$version.0"
+        size=$(echo $version | tr -cd '.' | wc -c)
+      done
+      echo "##vso[task.setvariable variable=OPENJDK_OUTPUT_FILE_PREFIX]microsoft-jdk-$version.$build-$(date '+%Y.%m.%d').$(Build.BuildId)"
+    displayName: "Pre Build: set file prefix"
 
   - bash: |
       if [ "$BUILD_HSDIS_DIR" != "" ]

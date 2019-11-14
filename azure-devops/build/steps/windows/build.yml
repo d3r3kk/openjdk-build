@@ -10,8 +10,14 @@ steps:
     displayName: "Windows Build: show all env vars"
     condition: eq(variables['system.debug'], 'true')
 
+  - script: |
+      mkdir "$(Agent.BuildDirectory)\openjdk-build\workspace\build"
+      mklink /D "$(Agent.BuildDirectory)\openjdk-build\workspace\build\src" "$(Build.SourcesDirectory)"
+    displayName: "Windows Build: create symbolic link"
+
   # Use the AdoptOpenJDK build scripts to build the OpenJDK8 binaries.
   - script: |
+      cd $(Agent.BuildDirectory)\openjdk-build
       IF "${{ parameters.buildJavaVersion }}"=="jdk8u" (
         set TOOLCHAIN_VERSION=2010
         set EXTRA_CONFIGURE_ARGS=
@@ -27,14 +33,14 @@ steps:
         set EXTRA_CONFIGURE_ARGS=--disable-warnings-as-errors
         set EXTRA_OPTION=
       )
-      bash.exe -c "./makejdk-any-platform.sh --adoptopenjdk-build-repo $(ADOPT_OPENJDK_BUILD_REPO_URI) --repository $(JAVA_SOURCE_REPO_URI) --branch %JAVA_SOURCE_REPO_BRANCH% -J %JDK_BOOT_DIR% --configure-args '%EXTRA_CONFIGURE_ARGS% --with-debug-level=$(BUILD_DEBUG_LEVEL) --with-toolchain-version=%TOOLCHAIN_VERSION%' -d artifacts --target-file-name microsoft-jdk_$(Agent.OSArchitecture)_$(Agent.OS)_hotspot-$(BUILD_DEBUG_LEVEL)_$(Build.BuildId).zip --no-adopt-patches ${{ parameters.buildJavaConfigure }} --build-variant ${{ parameters.buildJavaVariant }} --disable-adopt-branch-safety %EXTRA_OPTION% ${{ parameters.buildJavaVersion }}"
+      bash.exe -c "./makejdk-any-platform.sh --adoptopenjdk-build-repo $(ADOPT_OPENJDK_BUILD_REPO_URI) -J %JDK_BOOT_DIR% --repository $(JAVA_SOURCE_REPO_URI) --branch %JAVA_SOURCE_REPO_BRANCH% --disable-shallow-git-clone --configure-args '%EXTRA_CONFIGURE_ARGS% --with-debug-level=$(BUILD_DEBUG_LEVEL) --with-toolchain-version=%TOOLCHAIN_VERSION%' -d artifacts --target-file-name %OPENJDK_OUTPUT_FILE_PREFIX%-windows-x64.zip --no-adopt-patches ${{ parameters.buildJavaConfigure }} --build-variant ${{ parameters.buildJavaVariant }} --disable-adopt-branch-safety %EXTRA_OPTION% ${{ parameters.buildJavaVersion }}"
     displayName: "Windows Build: start makejdk-any-platform process"
 
   # Upload the produced JDK/JRE binary to the build artifact service.
   - task: PublishPipelineArtifact@1
     inputs:
       artifactName: $(Agent.OS)_$(Agent.OSArchitecture)
-      targetPath: "workspace/artifacts"
+      targetPath: "$(Agent.BuildDirectory)/openjdk-build/workspace/artifacts"
     displayName: "Windows Build: update JKD/JRE artifact"
 
   - script: |
