@@ -37,7 +37,7 @@ stages:
       - ${{ if or(eq(parameters.buildJavaVersion, 'jdk8u'), eq(parameters.buildJavaVersion, 'jdk11u')) }}:
 
         - job: test_linux_nightly_external
-          timeoutInMinutes: 120
+          timeoutInMinutes: 720
           displayName: "Test Linux Nightly External"
           pool:
             vmImage: ubuntu-16.04
@@ -52,5 +52,5 @@ stages:
             - template: ../steps/linux/test.yml
             - template: ../steps/shared/post_test.yml
               parameters:
-                testFailTaskOnFailedTests: true
+                testFailTaskOnFailedTests: false
                 testTestResultsFiles: "**/*.tap.xml"
