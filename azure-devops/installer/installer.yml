@@ -1,4 +1,22 @@
 stages:
+  - stage: installer_macOS
+    displayName: "Installer macOS"
+    condition: and(
+        or(
+          not(variables.INSTALLER_PLATFORMS),
+          contains(variables.INSTALLER_PLATFORMS, 'macOS')
+        ),
+        succeeded('build_macOS_binaries')
+      )
+    dependsOn: build_macOS_binaries
+    jobs:
+      - job: installer_macOS
+        displayName: "Installer macOS"
+        pool:
+          vmImage: macOS-latest
+        steps:
+          - template: ./steps/macOS/installer.yml
+
   - stage: installer_windows
     displayName: "Installer Windows"
     condition: and(
