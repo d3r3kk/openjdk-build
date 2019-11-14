@@ -1,12 +1,15 @@
+variables:
+  skipComponentGovernanceDetection: true
+
 stages:
   - stage: installer_macOS
     displayName: "Installer macOS"
     condition: and(
-        or(
-          not(variables.INSTALLER_PLATFORMS),
-          contains(variables.INSTALLER_PLATFORMS, 'macOS')
-        ),
-        succeeded('build_macOS_binaries')
+      or(
+      not(variables.INSTALLER_PLATFORMS),
+      contains(variables.INSTALLER_PLATFORMS, 'macOS')
+      ),
+      succeeded('build_macOS_binaries')
       )
     dependsOn: build_macOS_binaries
     jobs:
@@ -20,11 +23,11 @@ stages:
   - stage: installer_windows
     displayName: "Installer Windows"
     condition: and(
-        or(
-          not(variables.INSTALLER_PLATFORMS),
-          contains(variables.INSTALLER_PLATFORMS, 'Windows')
-        ),
-        succeeded('build_windows_binaries')
+      or(
+      not(variables.INSTALLER_PLATFORMS),
+      contains(variables.INSTALLER_PLATFORMS, 'Windows')
+      ),
+      succeeded('build_windows_binaries')
       )
     dependsOn: build_windows_binaries
     jobs:

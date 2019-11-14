@@ -7,6 +7,9 @@ parameters:
   buildJavaVariant: "hotspot"
   buildJavaConfigure: ""
 
+variables:
+  skipComponentGovernanceDetection: true
+
 stages:
   - stage: build_linux_binaries
     displayName: "Build Linux Binaries"

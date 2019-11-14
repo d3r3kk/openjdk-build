@@ -2,6 +2,9 @@ parameters:
   linuxContainer: ""
   buildJavaVersion: ""
 
+variables:
+  skipComponentGovernanceDetection: true
+
 stages:
   - template: ./linux_pr.yml
     parameters:
