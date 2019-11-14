@@ -37,8 +37,8 @@ steps:
       cd $(Pipeline.Workspace)
       bash.exe -c "mkdir -p ./j2sdk-image"
       bash.exe -c "mkdir -p ./j2re-image"
-      bash.exe -c "bsdtar --strip-components=1 -xvf *-jdk_*.zip -C ./j2sdk-image"
-      bash.exe -c "bsdtar --strip-components=1 -xvf *-jre_*.zip -C ./j2re-image"
+      bash.exe -c "bsdtar --strip-components=1 -xvf *jdk*.zip -C ./j2sdk-image"
+      bash.exe -c "bsdtar --strip-components=1 -xvf *jre*.zip -C ./j2re-image"
     displayName: "Windows Pre Test: decompress build pipeline artifact"
 
   - powershell: |

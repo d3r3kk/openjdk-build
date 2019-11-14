@@ -20,8 +20,8 @@ steps:
       cd $(Pipeline.Workspace)
       mkdir -p ./j2sdk-image
       mkdir -p ./j2re-image
-      tar -xzf *-jdk_*.tar.gz -C /$(Pipeline.Workspace)/j2sdk-image --strip-components=3
-      tar -xzf *-jre_*.tar.gz -C /$(Pipeline.Workspace)/j2re-image --strip-components=3
+      tar -xzf *jdk*.tar.gz -C /$(Pipeline.Workspace)/j2sdk-image --strip-components=3
+      tar -xzf *jre*.tar.gz -C /$(Pipeline.Workspace)/j2re-image --strip-components=3
     displayName: "macOS Pre Test: decompress build pipeline artifact"
 
   - bash: |
