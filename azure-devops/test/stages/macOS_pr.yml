@@ -3,6 +3,9 @@ parameters:
 
 stages:
   - stage: test_macOS_pr
+    variables:
+      skipComponentGovernanceDetection: true
+      BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
     displayName: "Test macOS PR"
     condition: and(
         or(

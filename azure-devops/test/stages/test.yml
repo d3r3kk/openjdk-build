@@ -2,9 +2,6 @@ parameters:
   linuxContainer: ""
   buildJavaVersion: ""
 
-variables:
-  skipComponentGovernanceDetection: true
-
 stages:
   - template: ./linux_pr.yml
     parameters:
@@ -13,6 +10,7 @@ stages:
 
   - template: ./linux_ci.yml
     parameters:
+      buildJavaVersion: ${{ parameters.buildJavaVersion }}
       linuxContainer: ${{ parameters.linuxContainer }}
 
   - template: ./linux_nightly.yml
@@ -31,3 +29,5 @@ stages:
       buildJavaVersion: ${{ parameters.buildJavaVersion }}
 
   - template: ./macOS_ci.yml
+    parameters:
+      buildJavaVersion: ${{ parameters.buildJavaVersion }}

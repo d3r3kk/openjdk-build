@@ -5,8 +5,13 @@ steps:
       cd $(Pipeline.Workspace)
       mkdir -p ./j2sdk-image
       mkdir -p ./j2re-image
+      mkdir -p ./test-image
       tar -xzf *jdk*.tar.gz -C /$(Pipeline.Workspace)/j2sdk-image --strip-components=1
       tar -xzf *jre*.tar.gz -C /$(Pipeline.Workspace)/j2re-image --strip-components=1
+      if [ "$BUILD_JAVA_VERSION" == "jdk11u" ] || [ "$BUILD_JAVA_VERSION" == "jdk" ]
+      then
+          tar -xzf *testimage*.tar.gz -C /$(Pipeline.Workspace)/test-image --strip-components=1
+      fi
     displayName: "Linux Pre Test: decompress build pipeline artifact"
 
   - bash: |
@@ -21,6 +26,7 @@ steps:
       echo "##vso[task.setvariable variable=OPENJDK_SOURCES]$BUILD_REPOSITORY_LOCALPATH";
       echo "##vso[task.setvariable variable=TEST_JDK_HOME]$PIPELINE_WORKSPACE/j2sdk-image";
       echo "##vso[task.setvariable variable=OPENJDK_BUILD]$PIPELINE_WORKSPACE/j2sdk-image";
+      echo "##vso[task.setvariable variable=TESTIMAGE_PATH]$PIPELINE_WORKSPACE/test-image";
       echo "##vso[task.setvariable variable=TEST_DIR]$COMMON_TESTRESULTSDIRECTORY/openjdk-tests"
       echo "##vso[task.setvariable variable=JRE_IMAGE]$PIPELINE_WORKSPACE/j2re-image";
       echo "##vso[task.setvariable variable=BUILD_ROOT]$COMMON_TESTRESULTSDIRECTORY/openjdk-tests/test-result";

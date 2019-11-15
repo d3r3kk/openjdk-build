@@ -3,6 +3,9 @@ parameters:
 
 stages:
   - stage: test_windows_pr
+    variables:
+      skipComponentGovernanceDetection: true
+      BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
     displayName: "Test Windows PR"
     condition: and(
         or(
@@ -47,5 +50,5 @@ stages:
           - template: ../steps/windows/test.yml
           - template: ../steps/shared/post_test.yml
             parameters:
-              testFailTaskOnFailedTests: false
+              testFailTaskOnFailedTests: true
               testTestResultsFiles: "**/*.tap.xml"

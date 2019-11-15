@@ -14,6 +14,10 @@ steps:
         ERR_MESSAGE_MISSING_ENV="Pipeline must set TEST_BUILD_LIST. $ERR_MESSAGE_MISSING_ENV"
       fi;
 
+      if [ -z "$BUILD_JAVA_VERSION" ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set BUILD_JAVA_VERSION. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
       if [ -z "$TEST_TARGET" ]; then
         ERR_MESSAGE_MISSING_ENV="Pipeline must set TEST_TARGET. $ERR_MESSAGE_MISSING_ENV"
       fi;

@@ -1,8 +1,7 @@
-variables:
-  skipComponentGovernanceDetection: true
-
 stages:
   - stage: installer_macOS
+    variables:
+      skipComponentGovernanceDetection: true
     displayName: "Installer macOS"
     condition: and(
       or(
@@ -21,6 +20,8 @@ stages:
           - template: ./steps/macOS/installer.yml
 
   - stage: installer_windows
+    variables:
+      skipComponentGovernanceDetection: true
     displayName: "Installer Windows"
     condition: and(
       or(
