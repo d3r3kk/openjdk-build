@@ -23,6 +23,8 @@ stages:
       buildJavaVersion: ${{ parameters.buildJavaVersion }}
 
   - template: ./windows_ci.yml
+    parameters:
+      buildJavaVersion: ${{ parameters.buildJavaVersion }}
 
   - template: ./macOS_pr.yml
     parameters:
