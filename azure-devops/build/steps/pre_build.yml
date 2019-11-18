@@ -97,17 +97,23 @@ steps:
     displayName: "Pre Build: set hg tag"
 
   - bash: |
-      build=${OPENJDK_TAG##*+}
-      TEMP=$OPENJDK_TAG
-      TEMP=${TEMP%%+*}
-      version=${TEMP##*-}
-      size=$(echo $version | tr -cd '.' | wc -c)
-      while [ $size -lt 2 ]
-      do
-        version="$version.0"
+      if [ "$BUILD_JAVA_VERSION" == "jdk" ] || [ "$BUILD_JAVA_VERSION" == "jdk11u" ]; then
+        build=${OPENJDK_TAG##*+}
+        TEMP=$OPENJDK_TAG
+        TEMP=${TEMP%%+*}
+        version=${TEMP##*-}
         size=$(echo $version | tr -cd '.' | wc -c)
-      done
-      echo "##vso[task.setvariable variable=OPENJDK_OUTPUT_FILE_PREFIX]microsoft-jdk-$version.$build-$(date '+%Y.%m.%d').$(Build.BuildId)"
+        while [ $size -lt 2 ]
+        do
+          version="$version.0"
+          size=$(echo $version | tr -cd '.' | wc -c)
+        done
+        echo "##vso[task.setvariable variable=OPENJDK_OUTPUT_FILE_PREFIX]microsoft-jdk-$version.$build-$(date '+%Y.%m.%d').$(Build.BuildId)"
+      else
+        echo "##vso[task.setvariable variable=OPENJDK_OUTPUT_FILE_PREFIX]microsoft-jdk-$(date '+%Y.%m.%d').$(Build.BuildId)"
+      fi
+    env:
+      BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
     displayName: "Pre Build: set file prefix"
 
   - bash: |

@@ -78,5 +78,5 @@ steps:
 
   - bash: |
       printenv
-    displayName: "Linux Test: show all env vars"
+    displayName: "Pre Test: show all env vars"
     condition: eq(variables['system.debug'], 'true')
