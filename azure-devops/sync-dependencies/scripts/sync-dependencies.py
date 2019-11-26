@@ -65,7 +65,7 @@ containers = [
             Dependency(
                 local_path="jdk13u.tar.gz",
                 blob_path="macOS/jdk13u.tar.gz",
-                resource_uri="openjdk13?openjdk_impl=hotspot&os=mac&arch=x64&release=latest&type=jdk",
+                resource_uri="/openjdk13?openjdk_impl=hotspot&os=mac&arch=x64&release=latest&type=jdk",
             ),
         ],
     ),
