@@ -3,6 +3,7 @@ parameters:
   buildJavaVariant: "hotspot"
   buildJavaConfigure: ""
   alsaUri: "https://buildreqs.blob.core.windows.net/alsa/alsa-lib-1.1.6.tar.bz2"
+  freetypeUri: "https://buildreqs.blob.core.windows.net/freetype/freetype-2.9.1.tar.gz"
 
 steps:
   - bash: |
@@ -28,6 +29,7 @@ steps:
         -d artifacts \
         --target-file-name $(OPENJDK_OUTPUT_FILE_PREFIX)-linux-x64.tar.gz  \
         --alsa-tarball-uri ${{ parameters.alsaUri }} \
+        --freetype-tarball-uri ${{ parameters.freetypeUri }} \
         --no-adopt-patches \
         ${{ parameters.buildJavaConfigure }} \
         --build-variant ${{ parameters.buildJavaVariant }} \

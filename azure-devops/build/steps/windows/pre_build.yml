@@ -14,7 +14,7 @@ steps:
       Invoke-WebRequest -UseBasicParsing https://cygwin.com/setup-x86_64.exe -OutFile '$(Agent.BuildDirectory)\temp\cygwin.exe';
       Start-Process -Wait -FilePath '$(Agent.BuildDirectory)\temp\cygwin.exe' -ArgumentList '--packages wget,rsync,gnupg,git,autoconf,make,gcc-core,mingw64-x86_64-gcc-core,unzip,zip,cpio,curl,grep,perl --quiet-mode --download --local-install --delete-orphans --site https://mirrors.kernel.org/sourceware/cygwin/ --local-package-dir $(Agent.BuildDirectory)\cygwin_packages --root $(Agent.BuildDirectory)\cygwin64';
       # java home (jdk8)
-      Invoke-WebRequest -UseBasicParsing "https://api.adoptopenjdk.net/v2/binary/releases/openjdk8?openjdk_impl=hotspot&os=windows&arch=x64&release=latest&type=jdk" -OutFile '$(Agent.BuildDirectory)\temp\jdk8.zip';
+      Invoke-WebRequest -UseBasicParsing "https://buildreqs.blob.core.windows.net/java/windows/jdk8u.zip" -OutFile '$(Agent.BuildDirectory)\temp\jdk8.zip';
       Expand-Archive -LiteralPath '$(Agent.BuildDirectory)\temp\jdk8.zip' -DestinationPath $(Agent.BuildDirectory)\temp\java;
       $directories = Get-ChildItem '$(Agent.BuildDirectory)\temp\java\jdk*'
       foreach ($directory in $directories) {
@@ -25,13 +25,13 @@ steps:
         Invoke-WebRequest -UseBasicParsing "${{ parameters.windowsBootJDKUri }}" -OutFile '$(Agent.BuildDirectory)\temp\jdk.zip';
       } elseif("${{ parameters.buildJavaVersion }}" -eq "jdk8u"){
         # java 8
-        Invoke-WebRequest -UseBasicParsing "https://api.adoptopenjdk.net/v2/binary/releases/openjdk8?openjdk_impl=hotspot&os=windows&arch=x64&release=latest&type=jdk" -OutFile '$(Agent.BuildDirectory)\temp\jdk.zip';
+        Invoke-WebRequest -UseBasicParsing "https://buildreqs.blob.core.windows.net/java/windows/jdk8u.zip" -OutFile '$(Agent.BuildDirectory)\temp\jdk.zip';
       } elseif("${{ parameters.buildJavaVersion }}" -eq "jdk11u"){
         # java 10
-        Invoke-WebRequest -UseBasicParsing "https://api.adoptopenjdk.net/v2/binary/releases/openjdk10?openjdk_impl=hotspot&os=windows&arch=x64&release=latest&type=jdk" -OutFile '$(Agent.BuildDirectory)\temp\jdk.zip';
+        Invoke-WebRequest -UseBasicParsing "https://buildreqs.blob.core.windows.net/java/windows/jdk10u.zip" -OutFile '$(Agent.BuildDirectory)\temp\jdk.zip';
       } elseif("${{ parameters.buildJavaVersion }}" -eq "jdk"){
-        # java 12
-        Invoke-WebRequest -UseBasicParsing "https://api.adoptopenjdk.net/v2/binary/releases/openjdk13?openjdk_impl=hotspot&os=windows&arch=x64&release=latest&type=jdk" -OutFile '$(Agent.BuildDirectory)\temp\jdk.zip';
+        # java 13
+        Invoke-WebRequest -UseBasicParsing "https://buildreqs.blob.core.windows.net/java/windows/jdk13u.zip" -OutFile '$(Agent.BuildDirectory)\temp\jdk.zip';
       }
       Expand-Archive -LiteralPath '$(Agent.BuildDirectory)\temp\jdk.zip' -DestinationPath $(Agent.BuildDirectory)\temp\openjdk;
       # java create symbolic link
