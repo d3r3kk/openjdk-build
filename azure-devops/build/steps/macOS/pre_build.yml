@@ -22,7 +22,7 @@ steps:
           wget -O /tmp/openjdk.tar.gz "https://buildreqs.blob.core.windows.net/java/macOS/jdk8u.tar.gz"
       elif [ "${{ parameters.buildJavaVersion }}" == "jdk11u" ]
       then
-          wget -O /tmp/openjdk.tar.gz "https://buildreqs.blob.core.windows.net/java/macOS/jdk10u.tar.gzk"
+          wget -O /tmp/openjdk.tar.gz "https://buildreqs.blob.core.windows.net/java/macOS/jdk10u.tar.gz"
       elif [ "${{ parameters.buildJavaVersion }}" == "jdk" ]
       then
           wget -O /tmp/openjdk.tar.gz "https://buildreqs.blob.core.windows.net/java/macOS/jdk13u.tar.gz"
