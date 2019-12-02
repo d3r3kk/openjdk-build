@@ -36,8 +36,8 @@ if [ "${VARIANT}" == "${BUILD_VARIANT_OPENJ9}" ]; then
 fi
 echo LDR_CNTRL=$LDR_CNTRL
 
-# Any version above 8
-if [ "$JAVA_FEATURE_VERSION" -gt 8 ]; then
+# Any version above 8 (11 for now due to openjdk-build#1409
+if [ "$JAVA_FEATURE_VERSION" -gt 11 ]; then
     BOOT_JDK_VERSION="$((JAVA_FEATURE_VERSION-1))"
     BOOT_JDK_VARIABLE="JDK$(echo $BOOT_JDK_VERSION)_BOOT_DIR"
     if [ ! -d "$(eval echo "\$$BOOT_JDK_VARIABLE")" ]; then
@@ -62,6 +62,12 @@ then
   export LANG=C
   if [ "$JAVA_FEATURE_VERSION" -ge 13 ]; then
     export PATH=/opt/freeware/bin:$JAVA_HOME/bin:/usr/local/bin:/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin:$PATH
+    export CC=xlclang
+    export CXX=xlclang++
+    # J9 JDK13 will break with an error building against libdwarf without this at present
+    if [ "${VARIANT}" == "${BUILD_VARIANT_OPENJ9}" ]; then
+      export CONFIGURE_ARGS_FOR_ANY_PLATFORM="${CONFIGURE_ARGS_FOR_ANY_PLATFORM} --disable-ddr"
+    fi
   else
     export PATH=/opt/freeware/bin:$JAVA_HOME/bin:/usr/local/bin:/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin:$PATH
   fi
