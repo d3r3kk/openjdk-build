@@ -1,0 +1,50 @@
+steps:
+  - bash: |
+      sudo apt-get -y update
+      sudo apt-get -y install ant-contrib
+    displayName: "mauve build: install dependencies"
+
+  # Create the expected dirs for the JDK/JRE to exist within for the test script and decompress the JDK and JRE into them.
+  # Remove the base-level folders from the JDK and JRE archives to allow us to refer to specific paths rather than the paths built into the archives.
+  - bash: |
+      cd $(Pipeline.Workspace)
+      mkdir -p ./j2sdk-image
+      mkdir -p ./j2re-image
+      tar -xzf *jdk*.tar.gz -C /$(Pipeline.Workspace)/j2sdk-image --strip-components=1
+      tar -xzf *jre*.tar.gz -C /$(Pipeline.Workspace)/j2re-image --strip-components=1
+    displayName: "mauve build: decompress build pipeline artifact"
+
+  # set up environment variables. we need to replace \ by / so that cygwin can resolve path correctly
+  - bash: |
+      echo "##vso[task.setvariable variable=DISPLAY]:1";
+      echo "##vso[task.setvariable variable=OPENJDK_SOURCES]$BUILD_REPOSITORY_LOCALPATH";
+      echo "##vso[task.setvariable variable=TEST_JDK_HOME]$PIPELINE_WORKSPACE/j2sdk-image";
+      echo "##vso[task.setvariable variable=OPENJDK_BUILD]$PIPELINE_WORKSPACE/j2sdk-image";
+      echo "##vso[task.setvariable variable=TEST_DIR]$COMMON_TESTRESULTSDIRECTORY/openjdk-tests"
+      echo "##vso[task.setvariable variable=JRE_IMAGE]$PIPELINE_WORKSPACE/j2re-image";
+      echo "##vso[task.setvariable variable=BUILD_ROOT]$COMMON_TESTRESULTSDIRECTORY/openjdk-tests/test-result";
+    displayName: "mauve build: update os specific test environment variables"
+
+  # create symbolic link, map openjdk source to the test framework folder
+  - bash: |
+      cd $TEST_DIR
+      ln -s $OPENJDK_SOURCES ./openjdk/openjdk-jdk
+    displayName: "mauve build: create symbolic link"
+
+  # Get openj9 test framework
+  - bash: |
+      cd $TEST_DIR
+      ./get.sh --openj9_repo $(OPENJ9_REPO_URI) --openj9_branch $(OPENJ9_REPO_BRANCH) -t $TEST_DIR
+    displayName: "mauve build: get openj9 test framework"
+
+  # Build test suites
+  - bash: |
+      cd $TEST_DIR
+      ./maketest.sh $TEST_DIR
+    displayName: "mauve build: build test suites"
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      artifactName: "mauve"
+      targetPath: "$(Common.TestResultsDirectory)/openjdk-tests/systemtest_prereqs/mauve"
+    displayName: "mauve build: upload mauve to artifact"

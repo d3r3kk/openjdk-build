@@ -22,14 +22,6 @@ steps:
         ERR_MESSAGE_MISSING_ENV="Pipeline must set TEST_TARGET. $ERR_MESSAGE_MISSING_ENV"
       fi;
 
-      if [ -z "$TEST_NAME" ]; then
-        ERR_MESSAGE_MISSING_ENV="Pipeline must set TEST_NAME. $ERR_MESSAGE_MISSING_ENV"
-      fi;
-
-      if [ -z $(BUILD_DEBUG_LEVEL) ]; then
-        ERR_MESSAGE_MISSING_ENV="Pipeline must set BUILD_DEBUG_LEVEL to fastdebug, slowdebug, release. $ERR_MESSAGE_MISSING_ENV"
-      fi;
-
       if [ -z $(ADOPT_OPENJDK_TEST_REPO_URI) ]; then
         ERR_MESSAGE_MISSING_ENV="Pipeline must set ADOPT_OPENJDK_TEST_REPO_URI to URI of the openjdk-tests repo to use. $ERR_MESSAGE_MISSING_ENV"
       fi;
@@ -37,7 +29,7 @@ steps:
       if [ -z $(ADOPT_OPENJDK_TEST_REPO_BRANCH) ]; then
         ERR_MESSAGE_MISSING_ENV="Pipeline must set ADOPT_OPENJDK_TEST_REPO_BRANCH to the branch-name of the openjdk-tests repo to use. $ERR_MESSAGE_MISSING_ENV"
       fi;
-      
+
       if [ -z $(OPENJ9_REPO_URI) ]; then
         ERR_MESSAGE_MISSING_ENV="Pipeline must set OPENJ9_REPO_URI to URI of the openj9 repo to use. $ERR_MESSAGE_MISSING_ENV"
       fi;

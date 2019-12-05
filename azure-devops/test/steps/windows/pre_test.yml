@@ -18,14 +18,16 @@ steps:
       New-Item -Path $(Agent.BuildDirectory) -Name 'temp' -ItemType 'directory';
       # cygwin
       Invoke-WebRequest -UseBasicParsing https://cygwin.com/setup-x86_64.exe -OutFile '$(Agent.BuildDirectory)\temp\cygwin.exe';
-      Start-Process -Wait -FilePath '$(Agent.BuildDirectory)\temp\cygwin.exe' -ArgumentList '--packages wget,bsdtar,git,make,curl,grep,perl,perl-XML-Parser,perl-Text-CSV,perl-JSON --quiet-mode --download --local-install --delete-orphans --site https://mirrors.kernel.org/sourceware/cygwin/ --local-package-dir $(Agent.BuildDirectory)\cygwin_packages --root $(Agent.BuildDirectory)\cygwin64';
+      Start-Process -Wait -FilePath '$(Agent.BuildDirectory)\temp\cygwin.exe' -ArgumentList '--packages cvs,wget,bsdtar,git,make,curl,grep,perl,perl-XML-Parser,perl-Text-CSV,perl-JSON --quiet-mode --download --local-install --delete-orphans --site https://mirrors.kernel.org/sourceware/cygwin/ --local-package-dir $(Agent.BuildDirectory)\cygwin_packages --root $(Agent.BuildDirectory)\cygwin64';
       # ant-contrib
       Invoke-WebRequest -UseBasicParsing https://managedway.dl.sourceforge.net/project/ant-contrib/ant-contrib/ant-contrib-1.0b2/ant-contrib-1.0b2-bin.zip -OutFile '$(Agent.BuildDirectory)\temp\ant-contrib.zip';
       Expand-Archive -LiteralPath '$(Agent.BuildDirectory)\temp\ant-contrib.zip' -DestinationPath '$(Agent.BuildDirectory)\temp\ant-contrib';
       Copy-Item -Path '$(Agent.BuildDirectory)\temp\ant-contrib\ant-contrib\lib\ant-contrib.jar' -Destination "$env:ANT_HOME\lib\ant-contrib.jar";
-      # tap-xunit
-      npm install tap-xunit -g;
     displayName: "Windows Pre Test: download & install dependencies"
+
+  - script: |
+      npm install tap-xunit -g
+    displayName: "Windows Pre Test: npm install dependencies"
 
   - script: |
       echo ##vso[task.setvariable variable=Path]$(Agent.BuildDirectory)\cygwin64\bin;%PATH%

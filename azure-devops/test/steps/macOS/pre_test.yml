@@ -1,18 +1,22 @@
 steps:
-  - script: |
+  - bash: |
       brew update
-    displayName: 'macOS Pre Test: brew update'
+    displayName: "macOS Pre Test: brew update"
 
   # Install macOS required dependencies
-  - script: |
+  - bash: |
       set -e
       brew install xmlstarlet ant ant-contrib
     displayName: "macOS Pre Test: brew install dependencies"
 
-  - script: |
+  - bash: |
+      npm install tap-xunit -g
+    displayName: "macOS Pre Test: npm install dependencies"
+
+  - bash: |
       export PERL_MM_USE_DEFAULT=1
       cpan install JSON Text::CSV XML::Parser
-    displayName: 'macOS Pre Test: perl install dependencies'
+    displayName: "macOS Pre Test: perl install dependencies"
 
   # Create the expected dirs for the JDK/JRE to exist within for the test script and decompress the JDK and JRE into them.
   # Remove the base-level folders from the JDK and JRE archives to allow us to refer to specific paths rather than the paths built into the archives.

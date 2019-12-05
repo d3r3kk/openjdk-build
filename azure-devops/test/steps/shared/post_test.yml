@@ -20,7 +20,7 @@ steps:
       searchFolder: "$(Common.TestResultsDirectory)"
       mergeTestResults: true
       failTaskOnFailedTests: ${{ parameters.testFailTaskOnFailedTests }}
-      testRunTitle: "$(TEST_NAME)-$(Agent.OSArchitecture)-$(Agent.OS)"
+      testRunTitle: "$(TEST_TARGET)-$(Agent.OSArchitecture)-$(Agent.OS)"
     displayName: "Post Test: publish test result"
 
   # Unset the global git authorization header. Remove this to ensure we have cleaned up any authorization keys

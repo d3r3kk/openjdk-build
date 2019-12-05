@@ -1,0 +1,23 @@
+parameters:
+  buildJavaVersion: ""
+
+stages:
+  - stage: test_mauve_binaries
+    variables:
+      skipComponentGovernanceDetection: true
+      BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
+    displayName: "Build Mauve Binaries"
+    condition: succeeded('build_linux_binaries')
+    dependsOn: build_linux_binaries
+
+    jobs:
+      - job: mauve
+        displayName: "mauve"
+        pool:
+          vmImage: ubuntu-16.04
+        variables:
+          BUILD_LIST: "system/mauveLoadTest"
+          TEST_TARGET: "_sanity.system"
+        steps:
+          - template: ../steps/shared/pre_test.yml
+          - template: ../steps/mauve/build.yml

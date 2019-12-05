@@ -15,6 +15,16 @@ steps:
     displayName: "Linux Pre Test: decompress build pipeline artifact"
 
   - bash: |
+      mkdir ~/.npm-global
+      npm config set prefix '~/.npm-global'
+      echo "##vso[task.setvariable variable=PATH]~/.npm-global/bin:$PATH";
+    displayName: "Linux Pre Test: npm update PATH env"
+
+  - bash: |
+      npm install tap-xunit -g
+    displayName: "Linux Pre Test: npm install dependencies"
+
+  - bash: |
       wget -O /tmp/openjdk_test_control.jar https://buildreqs.blob.core.windows.net/microsoft/openjdk_test_control.jar
       $(Pipeline.Workspace)/j2sdk-image/bin/java -jar /tmp/openjdk_test_control.jar -file $(Build.Repository.LocalPath)/.devops/problemlist.json -directory $(Common.TestResultsDirectory)/openjdk-tests/openjdk -os $(Agent.OS)_$(Agent.OSArchitecture);
     displayName: "Linux Pre Test: openjdk test inject problem list"

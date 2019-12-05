@@ -36,4 +36,4 @@ steps:
   - bash: |
       cd $TEST_DIR
       OPENJDK_DIR=$OPENJDK_SOURCES ./maketest.sh $TEST_DIR $TEST_TARGET
-    displayName: "Linux Test: execute test suites"
+    displayName: "macOS Test: execute test suites"
