@@ -45,10 +45,9 @@ stages:
           not(variables.TEST_PLATFORMS_AND_STAGES),
           contains(variables.TEST_PLATFORMS_AND_STAGES, 'Windows.pr')
           ),
-          succeeded('build_windows_binaries'),
-          succeeded('test_mauve_binaries')
+          succeeded('build_windows_binaries')
           )
-        dependsOn: [build_windows_binaries, test_mauve_binaries]
+        dependsOn: build_windows_binaries
 
         jobs:
           - job: sanity_system
@@ -61,7 +60,7 @@ stages:
               TEST_TARGET: "_sanity.system"
             steps:
               - template: ../steps/shared/pre_test.yml
-              - template: ../steps/mauve/download.yml
+              - template: ../steps/shared/windows_systemtest_dependencies.yml
               - template: ../steps/windows/pre_test.yml
               - template: ../steps/windows/test.yml
               - template: ../steps/shared/post_test.yml
@@ -94,6 +93,7 @@ stages:
               TEST_TARGET: "_extended.system"
             steps:
               - template: ../steps/shared/pre_test.yml
+              - template: ../steps/shared/windows_systemtest_dependencies.yml
               - template: ../steps/windows/pre_test.yml
               - template: ../steps/windows/test.yml
               - template: ../steps/shared/post_test.yml

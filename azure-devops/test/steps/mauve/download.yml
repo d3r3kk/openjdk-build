@@ -1,9 +1,0 @@
-steps:
-  - task: DownloadPipelineArtifact@2
-    inputs:
-      buildType: "current"
-      artifactName: "mauve"
-      itemPattern: "**"
-      targetPath: "$(Common.TestResultsDirectory)/openjdk-tests/systemtest_prereqs/mauve"
-    displayName: "mauve download: download mauve artifacts"
-

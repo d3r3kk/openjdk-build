@@ -8,10 +8,6 @@ stages:
       linuxContainer: ${{ parameters.linuxContainer }}
       buildJavaVersion: ${{ parameters.buildJavaVersion }}
 
-  - template: ./dependencies.yml
-    parameters:
-      buildJavaVersion: ${{ parameters.buildJavaVersion }}
-
   - template: ./windows.yml
     parameters:
       buildJavaVersion: ${{ parameters.buildJavaVersion }}

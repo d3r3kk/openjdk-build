@@ -27,6 +27,7 @@ stages:
           TEST_TARGET: "_extended.system"
         steps:
           - template: ../steps/shared/pre_test.yml
+          - template: ../steps/shared/unix_systemtest_dependencies.yml
           - template: ../steps/macOS/pre_test.yml
           - template: ../steps/macOS/test.yml
           - template: ../steps/shared/post_test.yml
@@ -92,10 +93,9 @@ stages:
       not(variables.TEST_PLATFORMS_AND_STAGES),
       contains(variables.TEST_PLATFORMS_AND_STAGES, 'macOS.pr')
       ),
-      succeeded('build_macOS_binaries'),
-      succeeded('test_mauve_binaries')
+      succeeded('build_macOS_binaries')
       )
-    dependsOn: [build_macOS_binaries, test_mauve_binaries]
+    dependsOn: build_macOS_binaries
 
     jobs:
       - job: sanity_system
@@ -108,7 +108,7 @@ stages:
           TEST_TARGET: "_sanity.system"
         steps:
           - template: ../steps/shared/pre_test.yml
-          - template: ../steps/mauve/download.yml
+          - template: ../steps/shared/unix_systemtest_dependencies.yml
           - template: ../steps/macOS/pre_test.yml
           - template: ../steps/macOS/test.yml
           - template: ../steps/shared/post_test.yml
