@@ -12,7 +12,7 @@ schedules:
     always: true
     branches:
       include:
-        - master
+        - juniper
 
 jobs:
   - job: mirror
