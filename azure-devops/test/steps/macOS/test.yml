@@ -8,7 +8,7 @@ steps:
   # Get openj9 test framework
   - bash: |
       cd $TEST_DIR
-      ./get.sh --openj9_repo $(OPENJ9_REPO_URI) --openj9_branch $(OPENJ9_REPO_BRANCH) -t $TEST_DIR
+      ./get.sh --openj9_repo $(OPENJ9_REPO_URI) --openj9_branch $(OPENJ9_REPO_BRANCH) --tkg_repo $(TKG_REPO) --tkg_branch $(TKG_REPO_BRANCH) -t $TEST_DIR
     displayName: "macOS Test: get openj9 test framework"
 
   # update test suites playlist.xml files

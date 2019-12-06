@@ -38,6 +38,14 @@ steps:
         ERR_MESSAGE_MISSING_ENV="Pipeline must set OPENJ9_REPO_BRANCH to the branch-name of the openj9 repo to use. $ERR_MESSAGE_MISSING_ENV"
       fi;
 
+      if [ -z $(TKG_REPO_URI) ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set TKG_REPO_URI to URI of the openj9 repo to use. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ -z $(TKG_REPO_BRANCH) ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set TKG_REPO_BRANCH to the branch-name of the openj9 repo to use. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
       if [ ! -z "$ERR_MESSAGE_MISSING_ENV" ]; then
         echo "##vso[task.logissue type=error;]$ERR_MESSAGE_MISSING_ENV"
         echo "##vso[task.complete result=Failed;]"
