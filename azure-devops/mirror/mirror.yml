@@ -1,0 +1,53 @@
+name: "$(Year:yyyy).$(Month).0.$(BuildID)"
+
+trigger: none
+
+pr: none
+
+schedules:
+  # Convert the UTC time to VNC time, so 7AM UTC is 12PM Vancouver time
+  # We run this every Tuesday
+  - cron: "0 7 * * *"
+    displayName: Nightly
+    always: true
+    branches:
+      include:
+        - master
+
+jobs:
+  - job: mirror
+    displayName: "Nightly Mirror Job"
+    pool:
+      vmImage: ubuntu-16.04
+    steps:
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: "3.8.0"
+
+      - bash: |
+          git config --global --add http.https://dev.azure.com.extraheader "AUTHORIZATION: bearer $(System.AccessToken)"
+          git config --global core.autocrlf input
+          git config --global user.email "juniperinfra@microsoft.com"
+          git config --global user.name "Juniper Mirror - $BUILD_DEFINITIONNAME"
+        env:
+          BUILD_DEFINITIONNAME: $(Build.DefinitionName)
+        displayName: "git config"
+
+      - checkout: self
+        fetchDepth: 1
+
+      - bash: |
+          python -m pip install -r ./azure-devops/mirror/scripts/requirements.txt
+        displayName: "pip install dependencies"
+
+      - bash: |
+          python ./azure-devops/mirror/scripts/main.py --source_git_uri $(SOURCE_GIT_URI) --source_branch $(SOURCE_BRANCH) --upstream_git_uri $(UPSTREAM_GIT_URI) --upstream_branch $(UPSTREAM_BRANCH) --pat $(PAT) --organization_url $(ORGANIZATION_URL) --project_id ${PROJECT_ID} --repository $(REPOSITORY)
+        displayName: "python run script"
+        env:
+          PAT: $(PAT)
+          PROJECT_ID: $(System.TeamProjectId)
+
+      - script: |
+          git config --global --unset http.https://dev.azure.com.extraheader
+        displayName: "git remove auth header(s)"
+        condition: always()
