@@ -163,6 +163,58 @@ containers = [
             ),
         ],
     ),
+    # based on https://ci.adoptopenjdk.net/view/all/job/systemtest.getDependency/
+    Container(
+        container="systemtest",
+        base_uri="https://ci.adoptopenjdk.net/view/all/job/systemtest.getDependency/lastSuccessfulBuild/artifact/systemtest_prereqs",
+        dependencies=[
+            Dependency(
+                local_path="ant-launcher.jar",
+                blob_path="ant-launcher.jar",
+                resource_uri="/apache-ant-1.10.2/lib/ant-launcher.jar",
+            ),
+            Dependency(
+                local_path="asm-7.1.jar",
+                blob_path="asm-7.1.jar",
+                resource_uri="/asm-7.1/asm-7.1.jar",
+            ),
+            Dependency(
+                local_path="org-netbeans-lib-cvsclient.jar",
+                blob_path="org-netbeans-lib-cvsclient.jar",
+                resource_uri="/cvsclient/org-netbeans-lib-cvsclient.jar",
+            ),
+            Dependency(
+                local_path="hamcrest-core-1.3.jar",
+                blob_path="hamcrest-core-1.3.jar",
+                resource_uri="/junit-4.12/hamcrest-core-1.3.jar",
+            ),
+            Dependency(
+                local_path="junit-4.12.jar",
+                blob_path="junit-4.12.jar",
+                resource_uri="/junit-4.12/junit-4.12.jar",
+            ),
+            Dependency(
+                local_path="log4j-api-2.3.jar",
+                blob_path="log4j-api-2.3.jar",
+                resource_uri="/log4j-2.3/log4j-api-2.3.jar",
+            ),
+            Dependency(
+                local_path="log4j-core-2.3.jar",
+                blob_path="log4j-core-2.3.jar",
+                resource_uri="/log4j-2.3/log4j-core-2.3.jar",
+            ),
+            Dependency(
+                local_path="mauve.jar",
+                blob_path="mauve.jar",
+                resource_uri="/mauve/mauve.jar",
+            ),
+            Dependency(
+                local_path="tools.jar",
+                blob_path="tools.jar",
+                resource_uri="/tools/tools.jar",
+            )
+        ],
+    ),
 ]
 
 for container in containers:
