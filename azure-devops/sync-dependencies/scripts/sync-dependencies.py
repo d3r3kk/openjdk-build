@@ -212,7 +212,29 @@ containers = [
                 local_path="tools.jar",
                 blob_path="tools.jar",
                 resource_uri="/tools/tools.jar",
-            )
+            ),
+        ],
+    ),
+    # based on https://ci.adoptopenjdk.net/view/all/job/systemtest.getDependency/
+    Container(
+        container="perftest",
+        base_uri="",
+        dependencies=[
+            Dependency(
+                local_path="openliberty-19.0.0.4.zip",
+                blob_path="openliberty-19.0.0.4.zip",
+                resource_uri="https://public.dhe.ibm.com/ibmdl/export/pub/software/openliberty/runtime/release/2019-04-19_0642/openliberty-19.0.0.4.zip",
+            ),
+            Dependency(
+                local_path="daytrader-ee7.ear",
+                blob_path="daytrader-ee7.ear",
+                resource_uri="https://github.com/WASdev/sample.daytrader7/releases/download/v1.2/daytrader-ee7.ear",
+            ),
+            Dependency(
+                local_path="db-derby-10.10.1.1-lib.zip",
+                blob_path="db-derby-10.10.1.1-lib.zip",
+                resource_uri="http://archive.apache.org/dist/db/derby/db-derby-10.10.1.1/db-derby-10.10.1.1-lib.zip",
+            ),
         ],
     ),
 ]
