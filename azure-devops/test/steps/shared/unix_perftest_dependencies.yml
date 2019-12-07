@@ -1,0 +1,11 @@
+steps:
+  - bash: |
+      DIR_PREFIX=$(Common.TestResultsDirectory)/openjdk-tests/perf/liberty/libertyBinaries
+      URI_PREFIX=https://buildreqs.blob.core.windows.net/perftest
+      mkdir -p ${DIR_PREFIX}
+      mkdir -p ${DIR_PREFIX}/openliberty-19.0.0.4/usr/shared/apps/webcontainer
+      mkdir -p ${DIR_PREFIX}/openliberty-19.0.0.4/usr/shared/resources/derby
+      wget -O ${DIR_PREFIX}/openliberty-19.0.0.4.zip ${URI_PREFIX}/openliberty-19.0.0.4.zip
+      wget -O ${DIR_PREFIX}/openliberty-19.0.0.4/usr/shared/apps/webcontainer/daytrader-ee7.ear ${URI_PREFIX}/daytrader-ee7.ear
+      wget -O ${DIR_PREFIX}/openliberty-19.0.0.4/usr/shared/resources/derby/derby.jar ${URI_PREFIX}/derby.jar
+    displayName: "unix perftest dependencies: download perftest dependencies from blob storage"

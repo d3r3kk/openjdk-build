@@ -158,6 +158,7 @@ stages:
               TEST_TARGET: "_sanity.perf"
             steps:
               - template: ../steps/shared/pre_test.yml
+              - template: ../steps/shared/windows_perftest_dependencies.yml
               - template: ../steps/windows/pre_test.yml
               - template: ../steps/windows/test.yml
               - template: ../steps/shared/post_test.yml
