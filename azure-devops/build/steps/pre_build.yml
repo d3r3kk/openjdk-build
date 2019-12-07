@@ -63,6 +63,12 @@ steps:
       git clone --single-branch --branch $(ADOPT_OPENJDK_BUILD_REPO_BRANCH) --depth 1 $(ADOPT_OPENJDK_BUILD_REPO_URI) "$(Agent.BuildDirectory)/openjdk-build"
     displayName: "Pre Build: checkout openjdk-build"
 
+  - task: Cache@2
+    inputs:
+      key: 'gradle | "$(Agent.OS)"'
+      path: $(Agent.BuildDirectory)/openjdk-build/pipelines/gradle-cache
+    displayName: "Pre Build: cache gradle"
+
   - bash: |
       # RH is just the prepended `refs/heads/` that we want to remove to get the branch name
       RH='refs/heads/';
