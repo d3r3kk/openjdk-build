@@ -252,12 +252,12 @@ containers = [
         container="perftest",
         base_uri="",
         dependencies=[
-            Dependency(
-                local_path="openliberty-19.0.0.4.zip",
-                blob_path="openliberty-19.0.0.4.zip",
-                resource_uri="https://public.dhe.ibm.com/ibmdl/export/pub/software/openliberty/runtime/release/2019-04-19_0642/openliberty-19.0.0.4.zip",
-                unzip=None
-            ),
+            # Dependency(
+            #     local_path="openliberty-19.0.0.4.zip",
+            #     blob_path="openliberty-19.0.0.4.zip",
+            #     resource_uri="https://public.dhe.ibm.com/ibmdl/export/pub/software/openliberty/runtime/release/2019-04-19_0642/openliberty-19.0.0.4.zip",
+            #     unzip=None
+            # ),
             Dependency(
                 local_path="daytrader-ee7.ear",
                 blob_path="daytrader-ee7.ear",
