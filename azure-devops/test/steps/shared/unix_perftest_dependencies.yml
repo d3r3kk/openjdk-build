@@ -1,5 +1,9 @@
 steps:
   - bash: |
+      echo "##vso[task.setvariable variable=PERF_ROOT]$(Common.TestResultsDirectory)/openjdk-tests/perf/liberty"
+    displayName: "unix perftest dependencies: set PERF_ROOT"
+
+  - bash: |
       DIR_PREFIX=$(Common.TestResultsDirectory)/openjdk-tests/perf/liberty/libertyBinaries
       URI_PREFIX=https://buildreqs.blob.core.windows.net/perftest
       mkdir -p ${DIR_PREFIX}

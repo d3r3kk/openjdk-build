@@ -1,4 +1,8 @@
 steps:
+  - bash: |
+      echo "##vso[task.setvariable variable=PERF_ROOT]$(Common.TestResultsDirectory)/openjdk-tests/perf/liberty"
+    displayName: "windows perftest dependencies: set PERF_ROOT"
+
   - powershell: |
       $ProgressPreference = 'SilentlyContinue';
       $DIR_PREFIX = "$(Common.TestResultsDirectory)/openjdk-tests/perf/liberty/libertyBinaries";
