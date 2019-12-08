@@ -272,6 +272,18 @@ containers = [
             ),
         ],
     ),
+    Container(
+        container="cygwin",
+        base_uri="",
+        dependencies=[
+            Dependency(
+                local_path="setup-x86_64.exe",
+                blob_path="setup-x86_64.exe",
+                resource_uri="https://cygwin.com/setup-x86_64.exe",
+                unzip=None
+            ),
+        ],
+    )
 ]
 
 for container in containers:

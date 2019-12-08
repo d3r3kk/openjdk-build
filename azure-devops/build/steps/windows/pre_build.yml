@@ -11,7 +11,7 @@ steps:
       New-Item -Path $(Agent.BuildDirectory) -Name 'openjdk' -ItemType 'directory';
       New-Item -Path $(Agent.BuildDirectory) -Name 'temp' -ItemType 'directory';
       # cygwin
-      Invoke-WebRequest -UseBasicParsing https://cygwin.com/setup-x86_64.exe -OutFile '$(Agent.BuildDirectory)\temp\cygwin.exe';
+      Invoke-WebRequest -UseBasicParsing https://buildreqs.blob.core.windows.net/cygwin/setup-x86_64.exe -OutFile '$(Agent.BuildDirectory)\temp\cygwin.exe';
       Start-Process -Wait -FilePath '$(Agent.BuildDirectory)\temp\cygwin.exe' -ArgumentList '--packages wget,rsync,gnupg,git,autoconf,make,gcc-core,mingw64-x86_64-gcc-core,unzip,zip,cpio,curl,grep,perl --quiet-mode --download --local-install --delete-orphans --site https://mirrors.kernel.org/sourceware/cygwin/ --local-package-dir $(Agent.BuildDirectory)\cygwin_packages --root $(Agent.BuildDirectory)\cygwin64';
       # java home (jdk8)
       Invoke-WebRequest -UseBasicParsing "https://buildreqs.blob.core.windows.net/java/windows/jdk8u.zip" -OutFile '$(Agent.BuildDirectory)\temp\jdk8.zip';
