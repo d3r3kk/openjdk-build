@@ -17,6 +17,7 @@ Details:
   --repository=RP         The simple name of the repo being mirred into.
 """
 import docopt
+import sys
 import git_svc
 import azure_devops
 
@@ -45,12 +46,17 @@ def main(
         remote_branch=upstream_branch,
     )
     pr_branch = f"pr_base_{base_sha1}_upstream_{upstream_sha1}"
-    merge_result = repo.merge(
+    merge_result, merge_sha1 = repo.merge(
         local_source_branch,
         local_upstream_branch,
         f"Merge upstream branch {upstream_branch} into branch {source_branch}",
         True,
     )
+
+    if merge_sha1 == base_sha1:
+        print("no change, stop pushing branch & creating pr")
+        sys.exit()
+
     repo.push("origin", local_source_branch, pr_branch)
     repo.push("origin", local_upstream_branch, "upstream")
 

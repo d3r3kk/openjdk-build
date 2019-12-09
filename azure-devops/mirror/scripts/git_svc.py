@@ -68,7 +68,7 @@ class GitSVC(object):
 
     def merge(
         self, base: str, feature: str, message: str, force_commit: bool = False
-    ) -> bool:
+    ) -> (bool, str):
         """
         merge two branches
         force_commit: when it is set to True, commit the merge with merge conflict
@@ -76,16 +76,19 @@ class GitSVC(object):
         assert base in self.__repo.branches
         assert feature in self.__repo.branches
         self.__repo.heads[base].checkout()
+        merge_result = None
         try:
             self.__repo.git.merge(feature, "-m", message)
-            return True
+            merge_result = True
         except git.exc.GitCommandError:
             if not force_commit:
                 raise
             print("git_svc merge: git auto merge failed, force commit the changes")
             self.__repo.git.add(".")
             self.__repo.git.commit("-m", message)
-            return False
+            merge_result = False
+        sha1 = self.__repo.head.object.hexsha[:8]
+        return merge_result, sha1
 
     def push(self, upstream: str, local_branch: str, upstream_branch: str) -> None:
         """
