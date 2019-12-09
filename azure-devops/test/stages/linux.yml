@@ -194,7 +194,7 @@ stages:
               TEST_TARGET: "_sanity.perf"
             steps:
               - template: ../steps/shared/pre_test.yml
-              - template: ../steps/shared/unix_perftest_dependencies.yml
+              - template: ../steps/shared/perftest_dependencies.yml
               - template: ../steps/linux/pre_test.yml
               - template: ../steps/linux/test.yml
               - template: ../steps/shared/post_test.yml
