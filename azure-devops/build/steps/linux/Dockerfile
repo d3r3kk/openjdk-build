@@ -4,7 +4,7 @@ FROM centos:6 AS base
 ENV JAVA_HOME /usr/local/openjdk
 ENV PATH $JAVA_HOME/bin:$PATH
 
-ADD . /tmp
+ADD . /
 
 RUN mkdir -p $JAVA_HOME && \
 	tar --extract --file *jdk*.tar.gz --directory $JAVA_HOME --strip-components 1 && \

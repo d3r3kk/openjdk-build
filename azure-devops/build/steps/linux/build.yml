@@ -56,7 +56,7 @@ steps:
       containerRegistry: ${{ parameters.containerRegistry }}
       repository: ${{ parameters.repository }}
       command: "buildAndPush"
-      Dockerfile: "./Dockerfile"
+      Dockerfile: "$(Agent.BuildDirectory)/openjdk-build/azure-devops/build/steps/linux/Dockerfile"
       buildContext: "$(Agent.BuildDirectory)/openjdk-build/workspace/artifacts"
       tags: "centos6-${{ parameters.javaVersion }}-$(Build.BuildNumber)"
     displayName: "Linux Build: build centos6 docker image"
