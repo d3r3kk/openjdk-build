@@ -63,6 +63,7 @@ stages:
           TEST_TARGET: "_sanity.external"
         steps:
           - template: ../steps/shared/pre_test.yml
+          - template: ../steps/shared/linux_externaltest_dependencies.yml
           - template: ../steps/linux/pre_test.yml
           - template: ../steps/linux/test.yml
           - template: ../steps/shared/post_test.yml
