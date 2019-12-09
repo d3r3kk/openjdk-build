@@ -5,12 +5,11 @@ steps:
 
   - powershell: |
       $ProgressPreference = 'SilentlyContinue';
-      $DIR_PREFIX = "$(Common.TestResultsDirectory)/openjdk-tests/perf/liberty/libertyBinaries";
       $URI_PREFIX = "https://buildreqs.blob.core.windows.net/perftest";
-      mkdir -p "$DIR_PREFIX";
-      mkdir -p "$DIR_PREFIX/openliberty-19.0.0.4/usr/shared/apps/webcontainer";
-      mkdir -p "$DIR_PREFIX/openliberty-19.0.0.4/usr/shared/resources/derby";
-      Invoke-WebRequest -UseBasicParsing "$URI_PREFIX/openliberty-19.0.0.4.zip" -OutFile "$DIR_PREFIX/openliberty-19.0.0.4.zip";
-      Invoke-WebRequest -UseBasicParsing "$URI_PREFIX/daytrader-ee7.ear" -OutFile "$DIR_PREFIX/openliberty-19.0.0.4/usr/shared/apps/webcontainer/daytrader-ee7.ear";
-      Invoke-WebRequest -UseBasicParsing "$URI_PREFIX/derby.jar" -OutFile "$DIR_PREFIX/openliberty-19.0.0.4/usr/shared/resources/derby/derby.jar";
+      mkdir -p "$(Common.TestResultsDirectory)/openjdk-tests/perf/liberty/libertyBinaries";
+      mkdir -p "$(Common.TestResultsDirectory)/openjdk-tests/test-result/perf/liberty/libertyBinaries/openliberty-19.0.0.4/usr/shared/apps/webcontainer";
+      mkdir -p "$(Common.TestResultsDirectory)/openjdk-tests/test-result/perf/liberty/libertyBinaries/openliberty-19.0.0.4/openliberty-19.0.0.4/usr/shared/resources/derby";
+      Invoke-WebRequest -UseBasicParsing "$URI_PREFIX/openliberty-19.0.0.4.zip" -OutFile "$(Common.TestResultsDirectory)/openjdk-tests/perf/liberty/libertyBinaries/openliberty-19.0.0.4.zip";
+      Invoke-WebRequest -UseBasicParsing "$URI_PREFIX/daytrader-ee7.ear" -OutFile "$(Common.TestResultsDirectory)/openjdk-tests/test-result/perf/liberty/libertyBinaries/openliberty-19.0.0.4/usr/shared/apps/webcontainer/daytrader-ee7.ear";
+      Invoke-WebRequest -UseBasicParsing "$URI_PREFIX/derby.jar" -OutFile "$(Common.TestResultsDirectory)/openjdk-tests/test-result/perf/liberty/libertyBinaries/openliberty-19.0.0.4/openliberty-19.0.0.4/usr/shared/resources/derby/derby.jar";     
     displayName: "windows perftest dependencies: download perftest dependencies from blob storage"
