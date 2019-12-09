@@ -2,6 +2,8 @@ parameters:
   buildJavaVersion: ""
   buildJavaVariant: "hotspot"
   buildJavaConfigure: ""
+  containerRegistry: "juniper-container-registry"
+  repository: "azure-devops-pipeline"
   alsaUri: "https://buildreqs.blob.core.windows.net/alsa/alsa-lib-1.1.6.tar.bz2"
   freetypeUri: "https://buildreqs.blob.core.windows.net/freetype/freetype-2.9.1.tar.gz"
 
@@ -48,6 +50,16 @@ steps:
       artifactName: $(Agent.OS)_$(Agent.OSArchitecture)
       targetPath: "$(Agent.BuildDirectory)/openjdk-build/workspace/artifacts"
     displayName: "Linux Build: upload JKD/JRE artifact"
+
+  - task: Docker@2
+    inputs:
+      containerRegistry: ${{ parameters.containerRegistry }}
+      repository: ${{ parameters.repository }}
+      command: "buildAndPush"
+      Dockerfile: "./Dockerfile"
+      buildContext: "$(Agent.BuildDirectory)/openjdk-build/workspace/artifacts"
+      tags: "centos6-${{ parameters.javaVersion }}-$(Build.BuildNumber)"
+    displayName: "Linux Build: build centos6 docker image"
 
   - script: |
       cd $BUILD_HSDIS_DIR
