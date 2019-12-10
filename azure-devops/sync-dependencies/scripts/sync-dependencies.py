@@ -264,12 +264,12 @@ containers = [
                 resource_uri="https://github.com/WASdev/sample.daytrader7/releases/download/v1.2/daytrader-ee7.ear",
                 unzip=None
             ),
-            Dependency(
-                local_path="db-derby-10.10.1.1-lib.zip",
-                blob_path="derby.jar",
-                resource_uri="http://archive.apache.org/dist/db/derby/db-derby-10.10.1.1/db-derby-10.10.1.1-lib.zip",
-                unzip="db-derby-10.10.1.1-lib/lib/derby.jar",
-            ),
+            # Dependency(
+            #     local_path="db-derby-10.10.1.1-lib.zip",
+            #     blob_path="derby.jar",
+            #     resource_uri="http://archive.apache.org/dist/db/derby/db-derby-10.10.1.1/db-derby-10.10.1.1-lib.zip",
+            #     unzip="db-derby-10.10.1.1-lib/lib/derby.jar",
+            # ),
         ],
     ),
     Container(
