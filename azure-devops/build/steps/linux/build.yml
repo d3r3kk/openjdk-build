@@ -58,8 +58,8 @@ steps:
       command: "buildAndPush"
       Dockerfile: "$(Agent.BuildDirectory)/openjdk-build/azure-devops/build/steps/linux/Dockerfile"
       buildContext: "$(Agent.BuildDirectory)/openjdk-build/workspace/artifacts"
-      tags: "centos6-${{ parameters.javaVersion }}-$(Build.BuildNumber)"
-    displayName: "Linux Build: build centos6 docker image"
+      tags: "linux-${{ parameters.javaVersion }}-$(Build.BuildNumber)"
+    displayName: "Linux Build: build linux docker image"
 
   - script: |
       cd $BUILD_HSDIS_DIR
