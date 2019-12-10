@@ -116,7 +116,11 @@ steps:
         done
         echo "##vso[task.setvariable variable=OPENJDK_OUTPUT_FILE_PREFIX]microsoft-jdk-$version.$build-$(date '+%Y.%m.%d').$(Build.BuildId)"
       else
-        echo "##vso[task.setvariable variable=OPENJDK_OUTPUT_FILE_PREFIX]microsoft-jdk-$(date '+%Y.%m.%d').$(Build.BuildId)"
+        build=$(echo "${OPENJDK_TAG##*b}" | sed 's/^0*//')
+        TEMP=$OPENJDK_TAG
+        TEMP=${TEMP%%-*}
+        version=${TEMP##*u}
+        echo "##vso[task.setvariable variable=OPENJDK_OUTPUT_FILE_PREFIX]microsoft-jdk-8.$version.$build-$(date '+%Y.%m.%d').$(Build.BuildId)"
       fi
     env:
       BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
