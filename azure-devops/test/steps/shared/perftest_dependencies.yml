@@ -1,6 +1,11 @@
 steps:
   - task: Cache@2
     inputs:
-      key: "$(Common.TestResultsDirectory)/openjdk-tests/perf/renaissance/build.xml | $(Common.TestResultsDirectory)/openjdk-tests/perf/liberty/build.xml | $(Common.TestResultsDirectory)/openjdk-tests/perf/dacapo/build.xml | $(Common.TestResultsDirectory)/openjdk-tests/perf/idle_micro/build.xml"
+      key:
+        "$(Common.TestResultsDirectory)/openjdk-tests/perf/renaissance/build.xml |
+        $(Common.TestResultsDirectory)/openjdk-tests/perf/liberty/build.xml |
+        $(Common.TestResultsDirectory)/openjdk-tests/perf/dacapo/build.xml |
+        $(Common.TestResultsDirectory)/openjdk-tests/perf/idle_micro/build.xml |
+        $(Common.TestResultsDirectory)/openjdk-tests/perf/bumbleBench/build.xml"
       path: $(Common.TestResultsDirectory)/openjdk-tests/test-result/perf/liberty/libertyBinaries
     displayName: "perftest dependencies: cache build binaries"
