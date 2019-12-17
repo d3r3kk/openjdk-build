@@ -43,7 +43,7 @@ fi
 if [ "${VARIANT}" == "${BUILD_VARIANT_OPENJ9}" ]
 then
   # CentOS 6 has openssl 1.0.1 so we use a self-installed 1.0.2 from the playbooks
-  if grep 'release 6' /etc/redhat-release >/dev/null; then
+  if grep 'release 6' /etc/redhat-release >/dev/null 2>&1 || grep 'jessie' /etc/os-release >/dev/null 2>&1; then
     if [ -r /usr/local/openssl-1.0.2/include/openssl/opensslconf.h ]; then
       export CONFIGURE_ARGS_FOR_ANY_PLATFORM="${CONFIGURE_ARGS_FOR_ANY_PLATFORM} --with-openssl=/usr/local/openssl-1.0.2"
     else
@@ -115,6 +115,9 @@ if [ "$JAVA_FEATURE_VERSION" -gt 10 ] || [ "${VARIANT}" == "${BUILD_VARIANT_OPEN
       [ -r /usr/local/gcc/bin/gcc-7.4 ] && export CC=/usr/local/gcc/bin/gcc-7.4
       [ -r /usr/local/gcc/bin/g++-7.4 ] && export CXX=/usr/local/gcc/bin/g++-7.4
       export LD_LIBRARY_PATH=/usr/local/gcc/lib64:/usr/local/gcc/lib
+    elif [ -r /usr/bin/gcc-7 ]; then
+      [ -r /usr/bin/gcc-7 ] && export CC=/usr/bin/gcc-7
+      [ -r /usr/bin/g++-7 ] && export CXX=/usr/bin/g++-7
     fi
 fi
 
