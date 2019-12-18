@@ -69,11 +69,11 @@ jobs:
           set -eux
           source constants.sh
           cd $REPO
-          git checkout -b upstream_master upstream/upstream_master
+          git checkout -b upstream upstream/upstream
           cd $SCRIPT_DIR
-          bash ./merge.sh -T "HEAD" -b "upstream_master"
+          bash ./merge.sh -T "HEAD" -b "upstream"
           echo "##vso[task.setvariable variable=UPSTREAM_GIT_SHA1]$(git rev-parse --short HEAD)"
-        displayName: "update upstream_master"
+        displayName: "update upstream"
 
       - bash: |
           cd ./git-hg/jdk8u
@@ -98,7 +98,7 @@ jobs:
           cd $REPO
           git checkout master -b ${PR_BRANCH}
           git push upstream ${PR_BRANCH}
-          git push upstream upstream_master
+          git push upstream upstream
           git push upstream --tags
         displayName: "push pr branch and tags to upstream"
 
