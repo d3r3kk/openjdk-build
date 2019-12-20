@@ -10,6 +10,7 @@ doInit="false"
 doReset="false"
 doTagging="false"
 doUpdate="false"
+# TODO: restore this file, and update JDK8 mirroring script to use -s option
 hgRepo="https://hg.openjdk.java.net/shenandoah/jdk8"
 tag="jdk8u172-b08"
 workingBranch="master"
