@@ -49,6 +49,9 @@ steps:
       targetPath: "$(Agent.BuildDirectory)/openjdk-build/workspace/artifacts"
     displayName: "macOS Build: upload JKD/JRE artifact"
 
+  - bash: |
+      ls -R $(Build.SourcesDirectory)
+
   - script: |
       cd $BUILD_HSDIS_DIR
       wget https://buildreqs.blob.core.windows.net/binutils/binutils-2.30.tar.gz
@@ -58,7 +61,7 @@ steps:
     condition: and(succeeded(), contains(variables.HSDIS_BUILD_PLATFORMS, 'macOS'))
 
   - bash: |
-      ls -R $BUILD_HSDIS_DIR
+      ls -R $(Build.SourcesDirectory)
 
   - task: PublishPipelineArtifact@1
     inputs:
