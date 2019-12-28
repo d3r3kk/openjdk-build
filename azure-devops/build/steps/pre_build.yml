@@ -135,10 +135,10 @@ steps:
           TEMP=
           case "${{ parameters.buildJavaVersion }}" in
             "jdk8u")
-                    TEMP="$(Build.SourcesDirectory)/workspace/build/src/hotspot/src/share/tools/hsdis"
+                    TEMP="$(Agent.BuildDirectory)/openjdk-build/workspace/build/src/hotspot/src/share/tools/hsdis"
                     ;;
             *)
-                    TEMP="$(Build.SourcesDirectory)/workspace/build/src/src/utils/hsdis"
+                    TEMP="$(Agent.BuildDirectory)/openjdk-build/workspace/build/src/src/utils/hsdis"
                     ;;
           esac
           echo "##vso[task.setvariable variable=BUILD_HSDIS_DIR]$TEMP"
