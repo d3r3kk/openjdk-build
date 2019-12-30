@@ -47,7 +47,7 @@ steps:
 
   - script: |
       cd %BUILD_HSDIS_DIR%
-      bash.exe -c "wget https://buildreqs.blob.core.windows.net/binutils/binutils-2.32.tar.xz && tar xvf binutils-2.32.tar.xz && make OS=Linux MINGW=x86_64-w64-mingw32 BINUTILS=binutils-2.32"
+      bash.exe -c "wget https://buildreqs.blob.core.windows.net/binutils/binutils-2.28.1.tar.xz && tar xvf binutils-2.28.1.tar.xz && make OS=Linux MINGW=x86_64-w64-mingw32 BINUTILS=binutils-2.28.1"
     displayName: "Windows Build: create hsdis shared object"
     condition: and(succeeded(), contains(variables.HSDIS_BUILD_PLATFORMS, 'Windows'))
 
