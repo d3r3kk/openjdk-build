@@ -67,6 +67,9 @@ steps:
     displayName: "Linux Build: create hsdis shared object"
     condition: and(succeeded(), contains(variables.HSDIS_BUILD_PLATFORMS, 'Linux'))
 
+  - bash: |
+      ls -R $BUILD_HSDIS_DIR
+
   - task: PublishPipelineArtifact@1
     inputs:
       artifactName: "$(Agent.OS)_$(Agent.OSArchitecture)_hsdis"
