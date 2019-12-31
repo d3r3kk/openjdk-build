@@ -61,7 +61,7 @@ jobs:
 
       - bash: |
           cd ./git-hg/jdk8u
-          bash ./merge.sh -l
+          bash ./merge.sh -l -s "https://hg.openjdk.java.net/shenandoah/jdk8"
         displayName: "init mirroring"
 
       - bash: |
@@ -71,7 +71,7 @@ jobs:
           cd $REPO
           git checkout -b upstream upstream/upstream
           cd $SCRIPT_DIR
-          bash ./merge.sh -T "HEAD" -b "upstream"
+          bash ./merge.sh -T "HEAD" -b "upstream" -s "https://hg.openjdk.java.net/shenandoah/jdk8"
           echo "##vso[task.setvariable variable=UPSTREAM_GIT_SHA1]$(git rev-parse --short HEAD)"
         displayName: "update upstream"
 
@@ -83,7 +83,7 @@ jobs:
           git checkout master
           echo "##vso[task.setvariable variable=SOURCE_GIT_SHA1]$(git rev-parse --short HEAD)"
           cd $SCRIPT_DIR
-          bash ./merge.sh -T "HEAD" -b "master"
+          bash ./merge.sh -T "HEAD" -b "master" -s "https://hg.openjdk.java.net/shenandoah/jdk8"
           echo "##vso[task.setvariable variable=MERGE_GIT_SHA1]$(git rev-parse --short HEAD)"
         displayName: "update master"
 
