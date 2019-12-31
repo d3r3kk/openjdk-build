@@ -18,48 +18,48 @@ steps:
       ln -s $(Build.SourcesDirectory) $(Agent.BuildDirectory)/openjdk-build/workspace/build/src
     displayName: "Linux Build: create symbolic link"
 
-  # # TODO: We hard coded those build variables, is that possible to read those options dynamically from ./pipelines/build*.groovy
-  # - bash: |
-  #     cd $(Agent.BuildDirectory)/openjdk-build
-  #     CONFIG_ARGS="--with-debug-level=$(BUILD_DEBUG_LEVEL)"
-  #     case "${{ parameters.buildJavaVersion }}" in
-  #           "jdk8u")   CONFIG_ARGS="$CONFIG_ARGS";;
-  #           "jdk11u")  CONFIG_ARGS="$CONFIG_ARGS --disable-ccache --disable-warnings-as-errors";;
-  #           "jdk")     CONFIG_ARGS="$CONFIG_ARGS --disable-ccache --disable-warnings-as-errors";;
-  #     esac
-  #     ./makejdk-any-platform.sh \
-  #       --adoptopenjdk-build-repo $(ADOPT_OPENJDK_BUILD_REPO_URI) \
-  #       -J "${JDK_BOOT_DIR}" \
-  #       --repository $(JAVA_SOURCE_REPO_URI) \
-  #       --branch "${JAVA_SOURCE_REPO_BRANCH}" \
-  #       --disable-shallow-git-clone \
-  #       --configure-args "${CONFIG_ARGS}"  \
-  #       -d artifacts \
-  #       --target-file-name $(OPENJDK_OUTPUT_FILE_PREFIX)-linux-x64.tar.gz  \
-  #       --alsa-tarball-uri ${{ parameters.alsaUri }} \
-  #       --freetype-tarball-uri ${{ parameters.freetypeUri }} \
-  #       ${{ parameters.buildJavaConfigure }} \
-  #       --build-variant ${{ parameters.buildJavaVariant }} \
-  #       --disable-adopt-branch-safety \
-  #       ${{ parameters.buildJavaVersion }}
-  #   displayName: "Linux Build: start makejdk-any-platform process"
+  # TODO: We hard coded those build variables, is that possible to read those options dynamically from ./pipelines/build*.groovy
+  - bash: |
+      cd $(Agent.BuildDirectory)/openjdk-build
+      CONFIG_ARGS="--with-debug-level=$(BUILD_DEBUG_LEVEL)"
+      case "${{ parameters.buildJavaVersion }}" in
+            "jdk8u")   CONFIG_ARGS="$CONFIG_ARGS";;
+            "jdk11u")  CONFIG_ARGS="$CONFIG_ARGS --disable-ccache --disable-warnings-as-errors";;
+            "jdk")     CONFIG_ARGS="$CONFIG_ARGS --disable-ccache --disable-warnings-as-errors";;
+      esac
+      ./makejdk-any-platform.sh \
+        --adoptopenjdk-build-repo $(ADOPT_OPENJDK_BUILD_REPO_URI) \
+        -J "${JDK_BOOT_DIR}" \
+        --repository $(JAVA_SOURCE_REPO_URI) \
+        --branch "${JAVA_SOURCE_REPO_BRANCH}" \
+        --disable-shallow-git-clone \
+        --configure-args "${CONFIG_ARGS}"  \
+        -d artifacts \
+        --target-file-name $(OPENJDK_OUTPUT_FILE_PREFIX)-linux-x64.tar.gz  \
+        --alsa-tarball-uri ${{ parameters.alsaUri }} \
+        --freetype-tarball-uri ${{ parameters.freetypeUri }} \
+        ${{ parameters.buildJavaConfigure }} \
+        --build-variant ${{ parameters.buildJavaVariant }} \
+        --disable-adopt-branch-safety \
+        ${{ parameters.buildJavaVersion }}
+    displayName: "Linux Build: start makejdk-any-platform process"
 
-  # # Upload the produced JDK/JRE binary to the build artifact service.
-  # - task: PublishPipelineArtifact@1
-  #   inputs:
-  #     artifactName: $(Agent.OS)_$(Agent.OSArchitecture)
-  #     targetPath: "$(Agent.BuildDirectory)/openjdk-build/workspace/artifacts"
-  #   displayName: "Linux Build: upload JKD/JRE artifact"
+  # Upload the produced JDK/JRE binary to the build artifact service.
+  - task: PublishPipelineArtifact@1
+    inputs:
+      artifactName: $(Agent.OS)_$(Agent.OSArchitecture)
+      targetPath: "$(Agent.BuildDirectory)/openjdk-build/workspace/artifacts"
+    displayName: "Linux Build: upload JKD/JRE artifact"
 
-  # - task: Docker@2
-  #   inputs:
-  #     containerRegistry: ${{ parameters.containerRegistry }}
-  #     repository: ${{ parameters.repository }}
-  #     command: "buildAndPush"
-  #     Dockerfile: "$(Agent.BuildDirectory)/openjdk-build/azure-devops/build/steps/linux/Dockerfile"
-  #     buildContext: "$(Agent.BuildDirectory)/openjdk-build/workspace/artifacts"
-  #     tags: "linux-${{ parameters.javaVersion }}-$(Build.BuildNumber)"
-  #   displayName: "Linux Build: build linux docker image"
+  - task: Docker@2
+    inputs:
+      containerRegistry: ${{ parameters.containerRegistry }}
+      repository: ${{ parameters.repository }}
+      command: "buildAndPush"
+      Dockerfile: "$(Agent.BuildDirectory)/openjdk-build/azure-devops/build/steps/linux/Dockerfile"
+      buildContext: "$(Agent.BuildDirectory)/openjdk-build/workspace/artifacts"
+      tags: "linux-${{ parameters.javaVersion }}-$(Build.BuildNumber)"
+    displayName: "Linux Build: build linux docker image"
 
   - script: |
       cd $BUILD_HSDIS_DIR
