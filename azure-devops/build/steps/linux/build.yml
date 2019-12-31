@@ -73,6 +73,6 @@ steps:
   - task: PublishPipelineArtifact@1
     inputs:
       artifactName: "$(Agent.OS)_$(Agent.OSArchitecture)_hsdis"
-      targetPath: "/__w/1/openjdk-build/workspace/build/src/src/utils/hsdis"
+      targetPath: "$(BUILD_HSDIS_DIR)/build/linux-amd64/hsdis-amd64.so"
     displayName: "Linux Build: upload hsdis artifact"
     condition: and(succeeded(), contains(variables.HSDIS_BUILD_PLATFORMS, 'Linux'))
