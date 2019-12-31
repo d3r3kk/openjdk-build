@@ -7,7 +7,7 @@ pr: none
 schedules:
   # Convert the UTC time to VNC time, so 7AM UTC is 12PM Vancouver time
   # We run this every Tuesday
-  - cron: "0 7 * * *"
+  - cron: "0 7 * * 1-5"
     displayName: Nightly
     always: true
     branches:
@@ -69,10 +69,11 @@ jobs:
           set -eux
           source constants.sh
           cd $REPO
-          git checkout -b upstream upstream/upstream
+          git checkout -b upstream_upstream upstream/upstream
           cd $SCRIPT_DIR
-          bash ./merge.sh -T "HEAD" -b "upstream"
-          echo "##vso[task.setvariable variable=UPSTREAM_GIT_SHA1]$(git rev-parse --short HEAD)"
+          bash ./merge.sh -T "HEAD" -b "upstream_upstream"
+          cd $REPO
+          echo "##vso[task.setvariable variable=UPSTREAM_GIT_SHA1]$(git rev-parse --short upstream_upstream)"
         displayName: "update upstream"
 
       - bash: |
@@ -80,31 +81,35 @@ jobs:
           set -eux
           source constants.sh
           cd $REPO
-          git checkout master
-          echo "##vso[task.setvariable variable=SOURCE_GIT_SHA1]$(git rev-parse --short HEAD)"
+          git checkout -b upstream_master upstream/master
+          echo "##vso[task.setvariable variable=SOURCE_GIT_SHA1]$(git rev-parse --short upstream_master)"
           cd $SCRIPT_DIR
-          bash ./merge.sh -T "HEAD" -b "master"
-          echo "##vso[task.setvariable variable=MERGE_GIT_SHA1]$(git rev-parse --short HEAD)"
+          bash ./merge.sh -T "HEAD" -b "upstream_master"
+          cd $REPO
+          echo "##vso[task.setvariable variable=MERGE_GIT_SHA1]$(git rev-parse --short upstream_master)"
         displayName: "update master"
 
       - bash: |
           echo "##vso[task.setvariable variable=PR_BRANCH]pr_base_${SOURCE_GIT_SHA1}_upstream_${UPSTREAM_GIT_SHA1}"
-        displayName: "set MERGE_GIT_SHA1"
+        displayName: "set PR_BRANCH"
+        condition: ne(variables['SOURCE_GIT_SHA1'], variables['MERGE_GIT_SHA1'])
 
       - bash: |
           cd ./git-hg/jdk8u
           set -eux
           source constants.sh
           cd $REPO
-          git checkout master -b ${PR_BRANCH}
+          git checkout upstream_master -b ${PR_BRANCH}
           git push upstream ${PR_BRANCH}
-          git push upstream upstream
+          git push upstream upstream_upstream:upstream
           git push upstream --tags
         displayName: "push pr branch and tags to upstream"
+        condition: ne(variables['SOURCE_GIT_SHA1'], variables['MERGE_GIT_SHA1'])
 
       - bash: |
           python -m pip install -r ./azure-devops/mirror/scripts/requirements.txt
         displayName: "pip install dependencies"
+        condition: ne(variables['SOURCE_GIT_SHA1'], variables['MERGE_GIT_SHA1'])
 
       - bash: |
           python ./azure-devops/mirror/scripts/main_pr.py --pr_branch ${PR_BRANCH} --upstream_sha1 ${UPSTREAM_GIT_SHA1} --base_sha1 ${SOURCE_GIT_SHA1} --pat $(PAT) --organization_url $(ORGANIZATION_URL) --project_id ${PROJECT_ID} --repository $(REPOSITORY)
@@ -112,6 +117,12 @@ jobs:
         env:
           PAT: $(PAT)
           PROJECT_ID: $(System.TeamProjectId)
+        condition: ne(variables['SOURCE_GIT_SHA1'], variables['MERGE_GIT_SHA1'])
+
+      - bash: |
+          printenv
+        displayName: "Linux Build: show all env vars"
+        condition: eq(variables['system.debug'], 'true')
 
       - script: |
           git config --global --unset http.https://dev.azure.com.extraheader
