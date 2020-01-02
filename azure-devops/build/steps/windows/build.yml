@@ -16,7 +16,7 @@ steps:
       mklink /D "$(Agent.BuildDirectory)\openjdk-build\workspace\build\src" "$(Build.SourcesDirectory)"
     displayName: "Windows Build: create symbolic link"
 
-  TODO: We hard coded those build variables, is that possible to read those options dynamically from ./pipelines/build*.groovy files
+  # TODO: We hard coded those build variables, is that possible to read those options dynamically from ./pipelines/build*.groovy files
   Use the AdoptOpenJDK build scripts to build the OpenJDK8 binaries.
   - script: |
       cd $(Agent.BuildDirectory)\openjdk-build
