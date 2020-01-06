@@ -7,7 +7,6 @@ parameters:
   buildJavaVariant: "hotspot"
   buildJavaConfigure: ""
 
-# TODO: considering add a pipeline to build release version
 stages:
   - stage: build_linux_binaries
     variables:

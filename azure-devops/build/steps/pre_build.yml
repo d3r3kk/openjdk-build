@@ -126,7 +126,6 @@ steps:
       BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
     displayName: "Pre Build: set file prefix"
 
-  # TODO: hsdis upload step seems broken, please try to fix this
   - bash: |
       if [ "$BUILD_HSDIS_DIR" != "" ]
       then
