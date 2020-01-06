@@ -86,9 +86,9 @@ stages:
             parameters:
               buildJavaVersion: ${{ parameters.buildJavaVersion }}
               windowsBootJDKUri: ${{ parameters.windowsBootJDKUri }}
-          - template: ../steps/windows/build.yml
-            parameters:
-              buildJavaVersion: ${{ parameters.buildJavaVersion }}
-              buildJavaVariant: ${{ parameters.buildJavaVariant }}
-              buildJavaConfigure: ${{ parameters.buildJavaConfigure }}
+          # - template: ../steps/windows/build.yml
+          #   parameters:
+          #     buildJavaVersion: ${{ parameters.buildJavaVersion }}
+          #     buildJavaVariant: ${{ parameters.buildJavaVariant }}
+          #     buildJavaConfigure: ${{ parameters.buildJavaConfigure }}
           - template: ../steps/post_build.yml
