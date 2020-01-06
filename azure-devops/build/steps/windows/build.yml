@@ -16,6 +16,7 @@ steps:
       mklink /D "$(Agent.BuildDirectory)\openjdk-build\workspace\build\src" "$(Build.SourcesDirectory)"
     displayName: "Windows Build: create symbolic link"
 
+  # Use the AdoptOpenJDK build scripts to build the OpenJDK8 binaries.
   - script: |
       cd $(Agent.BuildDirectory)\openjdk-build
       IF "${{ parameters.buildJavaVersion }}"=="jdk8u" (
