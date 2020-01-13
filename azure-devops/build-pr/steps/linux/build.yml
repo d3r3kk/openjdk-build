@@ -1,0 +1,68 @@
+parameters:
+  buildJavaVersion: ""
+  containerRegistry: "juniper-container-registry"
+  repository: "linux_amd64_agent"
+
+steps:
+  - bash: |
+      git config --global core.autocrlf input
+    displayName: "Pre Build: configure crlf option"
+
+  - checkout: self
+
+  # Download jtreg from artifact feed
+  - task: DownloadPackage@1
+    inputs:
+      packageType: 'upack'
+      feed: 'c4530ae8-1fc6-48b4-8861-0cfc3363bf84/99bf70fb-4655-4785-8d4e-c2197700c237'
+      view: '68a23085-4d75-429e-867a-aaa73f9d724c'
+      definition: 'b5a5adcc-ae25-4bb9-a55e-fe1cd7d6aa71'
+      version: '4.2.0'
+      downloadPath: '$(System.ArtifactsDirectory)'
+    displayName: "Pre Build: download jtreg artifact"
+  
+  # Extract jtreg
+  - bash: |
+      tar -xf $(System.ArtifactsDirectory)/jtreg-4.2.0-tip.tar.gz --directory $(System.ArtifactsDirectory)
+    displayName: "Pre Build: extract jtreg"
+
+  # Log in Docker container registry
+  - task: Docker@2
+    inputs:
+      containerRegistry: ${{ parameters.containerRegistry }}
+      repository: ${{ parameters.repository }}
+      command: "login"
+      tags: "latest"
+    displayName: "Pre Build: docker login"
+
+  # Pull linux_amd64_agent image
+  - bash: |
+      docker pull junipercontainerregistry.azurecr.io/linux_amd64_agent:latest
+    displayName: "Pre Build: docker pull"    
+
+  # configure (with jtreg)
+  - bash: |
+      docker run --rm -t --volume $(Build.Repository.LocalPath):/openjdk --volume $(System.ArtifactsDirectory)/jtreg:/jtreg junipercontainerregistry.azurecr.io/linux_amd64_agent:latest bash -c "cd /openjdk && bash configure --with-jtreg=/jtreg"
+    displayName: "Build: configure"
+
+  # make
+  - bash: |
+      docker run --rm -t --volume $(Build.Repository.LocalPath):/openjdk --volume $(System.ArtifactsDirectory)/jtreg:/jtreg junipercontainerregistry.azurecr.io/linux_amd64_agent:latest bash -c "cd /openjdk && make images"
+    displayName: "Build: make"
+
+  # regression tests
+  # jtreg tests for the jdk (only) can be found in openjdk-{{parameters.buildJavaVersion}}/test/jdk/TEST.groups
+  # 
+  # test jdk:tier1
+  - bash: |
+      docker run --rm -t --volume $(Build.Repository.LocalPath):/openjdk --volume $(System.ArtifactsDirectory)/jtreg:/jtreg junipercontainerregistry.azurecr.io/linux_amd64_agent:latest bash -c "cd /openjdk && make run-test TEST=jdk:tier1"
+    displayName: "Test: jtreg jdk:tier1"
+
+  # Publish test results as pipeline artifact
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '$(Build.Repository.LocalPath)/openjdk/build/*/test-results'
+      artifact: 'test-results'
+      publishLocation: 'pipeline'
+    displayName: "Post Build: publish test-results as artifact" 
+
