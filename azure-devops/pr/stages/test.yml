@@ -1,0 +1,41 @@
+# 
+# Test template
+#
+# It defines the stages to test the JDK for different platforms
+# 
+# @param linuxContainer Container to test the JDK in
+
+parameters:
+    linuxContainer: ""
+
+stages:
+  - stage: test_linux_binaries
+    variables:
+      skipComponentGovernanceDetection: true
+    displayName: "Test Linux Binaries"
+    dependsOn: build_linux_binaries
+    condition: and(
+      or(
+        not(variables.BUILD_PLATFORMS),
+        eq(variables.BUILD_PLATFORMS, '*'),
+        contains(variables.BUILD_PLATFORMS, 'Linux')
+      ), succeeded('build_linux_binaries'))
+    jobs:
+      - job: test_linux
+        displayName: "Test Linux"
+        pool:
+          vmImage: ubuntu-16.04
+        container: ${{ parameters.linuxContainer }}
+        steps:
+          - template: ../steps/linux/test.yml
+        strategy:
+          matrix:
+            JDK_tier1_part1:
+              JTREG_TESTS: 'jdk:tier1_part1'
+              TEST_RESULTS_ARTIFACT_NAME: 'JDK_tier1_part1'
+            JDK_tier1_part2:
+              JTREG_TESTS: 'jdk:tier1_part2'
+              TEST_RESULTS_ARTIFACT_NAME: 'JDK_tier1_part2'
+            JDK_tier1_part3:
+              JTREG_TESTS: 'jdk:tier1_part3'
+              TEST_RESULTS_ARTIFACT_NAME: 'JDK_tier1_part3'

@@ -1,0 +1,40 @@
+# 
+# Test Linux template
+#
+# It runs jtreg tests on the jdk previously built,
+# and then uploads the results as artifact
+#
+
+steps:
+  # checkout files of the openjdk repo that uses this template
+  - checkout: self
+
+  # Create folder to download JDK
+  - bash: mkdir -p $(Pipeline.Workspace)/jdk
+    displayName: "[Pre test] Create folder to download JDK artifact"
+
+  # Download JDK artifact
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      buildType: "current"
+      artifactName: "$(Agent.OS)_$(Agent.OSArchitecture)_JDK"
+      itemPattern: "**"
+      targetPath: "$(Pipeline.Workspace)/jdk"
+    displayName: "[Pre test] download JDK artifact"
+
+  # Extract JDK
+  - bash: tar -xvf $(Pipeline.Workspace)/jdk/jdk.tar.gz -C $(Pipeline.Workspace)/jdk
+    displayName: "[Pre test] Extract JDK"
+
+  # run tests via jtreg
+  - bash: bash $JTREG_PATH/bin/jtreg -v -jdk:$(Pipeline.Workspace)/jdk test/$(JTREG_TESTS)
+    displayName: "[Test] jtreg $(JTREG_TESTS)"
+
+  # Publish test results as pipeline artifact
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '$(Build.SourcesDirectory)/JTreport'
+      artifact: '$(Agent.OS)_$(Agent.OSArchitecture)_JTreport_$(TEST_RESULTS_ARTIFACT_NAME)'
+      publishLocation: 'pipeline'
+    condition: succeededOrFailed()
+    displayName: "[Post test] publish JTreport as artifact"
