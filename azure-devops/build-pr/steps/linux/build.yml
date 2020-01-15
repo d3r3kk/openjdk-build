@@ -60,6 +60,7 @@ steps:
 
   # Publish test results as pipeline artifact
   - task: PublishPipelineArtifact@1
+    condition: succeededOrFailed()
     inputs:
       targetPath: '$(Build.Repository.LocalPath)/openjdk/build/*/test-results'
       artifact: 'test-results'
