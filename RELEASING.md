@@ -121,7 +121,7 @@ https://ci.adoptopenjdk.net/job/build-scripts/job/release/job/refactor_openjdk_r
    * SUBMIT!!
 6. Once the job completes successfully, check the binaries have uploaded to github at somewhere like https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/jdk8u232-b09
 7. Within 15 minutes the binaries should be available on the website too at e.g. https://adoptopenjdk.net/?variant=openjdk11&jvmVariant=openj9
-8. Since you have 15 minutes free, use that time to update https://github.com/AdoptOpenJDK/openjdk-website/blob/master/src/handlebars/support.handlebars to update the versions in the table on https://adoptopenjdk.net/support.html
+8. Since you have 15 minutes free, use that time to update https://github.com/AdoptOpenJDK/openjdk-website/blob/master/src/handlebars/support.handlebars which is the source of  https://adoptopenjdk.net/support.html and (if required) the supported platforms table at https://github.com/AdoptOpenJDK/openjdk-website/blob/master/src/handlebars/supported_platforms.handlebars which is the source of https://adoptopenjdk.net/supported_platforms.html
 9. Publicise the Adopt JDK release via slack on AdoptOpenJDK #release
 10. If desired, find someone with the appropriate authority (George, Martijn, Shelley, Stewart) to post a tweet about the new release from the AdoptOpenJDK twitter account
 
@@ -137,10 +137,10 @@ The following examples all use `-m1` as an example - this gets replaced with a l
    * Update custom-spec.gmk.in with correct `J9JDK_EXT_VERSION` for the release, [Sample commit for 11](https://github.com/ibmruntimes/openj9-openjdk-jdk8/commit/8512fe26e568962d4ee08f82f2f59d3bb241bb9d) and [Sample commit for 11](https://github.com/ibmruntimes/openj9-openjdk-jdk11/commit/c7964e29fea19a7803a86bc991de0d0e45547dc8) e.g:
 ```
 jdk11+ ==> J9JDK_EXT_VERSION       := 11.0.5.0-m1
-jdk8     ==>  J9JDK_EXT_VERSION       := $(JDK_MINOR_VERSION).$(JDK_MICRO_VERSION).$(JDK_MOD_VERSION).$(JDK_FIX_VERSION)
+jdk8     ==>  J9JDK_EXT_VERSION       := $(JDK_MINOR_VERSION).$(JDK_MICRO_VERSION).$(JDK_MOD_VERSION).$(JDK_FIX_VERSION)-m1
 # J9JDK_EXT_VERSION       := HEAD   <==  !!! Comment out this line
 JDK_MOD_VERSION=232
-JDK_FIX_VERSION=0-m1
+JDK_FIX_VERSION=0
 ```
 5. Build and Test the OpenJDK for OpenJ9 "release" at AdoptOpenJDK using a build pipeline job as follows https://ci.adoptopenjdk.net/job/build-scripts/job/openjdkNN-pipeline/build?delay=0sec
    * `targetConfigurations`: remove all "hotspot" entries
