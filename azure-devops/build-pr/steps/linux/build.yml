@@ -63,14 +63,15 @@ steps:
   # Thus, the path must be evaluated before.
   - bash: 
       echo "##vso[task.setvariable variable=testResultsPath]$(echo $(Build.Repository.LocalPath)/build/*/test-results)
+    condition: succeededOrFailed()
     displayName: "Post build: get test-results path"
 
   # Publish test results as pipeline artifact
   - task: PublishPipelineArtifact@1
-    condition: succeededOrFailed()
     inputs:
       targetPath: '$(testResultsPath)'
       artifact: 'test-results'
       publishLocation: 'pipeline'
+    condition: succeededOrFailed()
     displayName: "Post Build: publish test-results as artifact" 
 
