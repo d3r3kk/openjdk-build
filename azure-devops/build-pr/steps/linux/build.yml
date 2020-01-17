@@ -50,13 +50,11 @@ steps:
       docker run --rm -t --volume $(Build.Repository.LocalPath):/openjdk --volume $(System.ArtifactsDirectory)/jtreg:/jtreg junipercontainerregistry.azurecr.io/linux_amd64_agent:latest bash -c "cd /openjdk && make images"
     displayName: "Build: make"
 
-  # regression tests
-  # jtreg tests for the jdk (only) can be found in openjdk-{{parameters.buildJavaVersion}}/test/jdk/TEST.groups
-  # 
-  # test jdk:tier1
+  # make run-test
+  # Only tier1 is being tested
   - bash: |
-      docker run --rm -t --volume $(Build.Repository.LocalPath):/openjdk --volume $(System.ArtifactsDirectory)/jtreg:/jtreg junipercontainerregistry.azurecr.io/linux_amd64_agent:latest bash -c "cd /openjdk && make run-test TEST=jdk:tier1"
-    displayName: "Test: jtreg jdk:tier1"
+      docker run --rm -t --volume $(Build.Repository.LocalPath):/openjdk --volume $(System.ArtifactsDirectory)/jtreg:/jtreg junipercontainerregistry.azurecr.io/linux_amd64_agent:latest bash -c "cd /openjdk && make run-test TEST=tier1"
+    displayName: "Test: jtreg tier1"
   
   # Set testResultsPath
   # The PublishPipelineArtifact tash does not allow wildcards in targetPath.
