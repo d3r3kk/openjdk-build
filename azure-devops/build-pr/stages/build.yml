@@ -19,6 +19,7 @@ stages:
         displayName: "Build Linux"
         pool:
           vmImage: ubuntu-16.04
+        container: ${{ parameters.linuxContainer }}
         steps:
           - template: ../steps/linux/build.yml
             parameters:

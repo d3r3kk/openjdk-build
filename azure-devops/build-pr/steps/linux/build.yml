@@ -4,60 +4,28 @@ parameters:
   repository: "linux_amd64_agent"
 
 steps:
-  - bash: |
-      git config --global core.autocrlf input
-    displayName: "Pre Build: configure crlf option"
-
+  # checkout files of the openjdk repo that uses this template
   - checkout: self
 
-  # Download jtreg from artifact feed
-  - task: DownloadPackage@1
-    inputs:
-      packageType: 'upack'
-      feed: 'c4530ae8-1fc6-48b4-8861-0cfc3363bf84/99bf70fb-4655-4785-8d4e-c2197700c237'
-      view: '68a23085-4d75-429e-867a-aaa73f9d724c'
-      definition: 'b5a5adcc-ae25-4bb9-a55e-fe1cd7d6aa71'
-      version: '4.2.0'
-      downloadPath: '$(System.ArtifactsDirectory)'
-    displayName: "Pre Build: download jtreg artifact"
-  
-  # Extract jtreg
-  - bash: |
-      tar -xf $(System.ArtifactsDirectory)/jtreg-4.2.0-tip.tar.gz --directory $(System.ArtifactsDirectory)
-    displayName: "Pre Build: extract jtreg"
-
-  # Log in Docker container registry
-  - task: Docker@2
-    inputs:
-      containerRegistry: ${{ parameters.containerRegistry }}
-      repository: ${{ parameters.repository }}
-      command: "login"
-      tags: "latest"
-    displayName: "Pre Build: docker login"
-
-  # Pull linux_amd64_agent image
-  - bash: |
-      docker pull junipercontainerregistry.azurecr.io/linux_amd64_agent:latest
-    displayName: "Pre Build: docker pull"    
-
   # configure (with jtreg)
+  # JTREG_PATH is the path to jtreg 4.2.0 set in the docker image linux_amd64_agent
   - bash: |
-      docker run --rm -t --volume $(Build.Repository.LocalPath):/openjdk --volume $(System.ArtifactsDirectory)/jtreg:/jtreg junipercontainerregistry.azurecr.io/linux_amd64_agent:latest bash -c "cd /openjdk && bash configure --with-jtreg=/jtreg"
+      bash configure --with-jtreg=$JTREG_PATH
     displayName: "Build: configure"
 
-  # make
+  # make jdk and jre
   - bash: |
-      docker run --rm -t --volume $(Build.Repository.LocalPath):/openjdk --volume $(System.ArtifactsDirectory)/jtreg:/jtreg junipercontainerregistry.azurecr.io/linux_amd64_agent:latest bash -c "cd /openjdk && make images"
+      make images
     displayName: "Build: make"
 
   # make run-test
-  # Only tier1 is being tested
+  # Only jdk:tier1 is being tested
   - bash: |
-      docker run --rm -t --volume $(Build.Repository.LocalPath):/openjdk --volume $(System.ArtifactsDirectory)/jtreg:/jtreg junipercontainerregistry.azurecr.io/linux_amd64_agent:latest bash -c "cd /openjdk && make run-test TEST=tier1"
-    displayName: "Test: jtreg tier1"
+      make run-test TEST=jdk:tier1
+    displayName: "Test: jtreg jdk:tier1"
   
   # Set testResultsPath
-  # The PublishPipelineArtifact tash does not allow wildcards in targetPath.
+  # The PublishPipelineArtifact task does NOT allow wildcards in targetPath.
   # Thus, the path must be evaluated before.
   - bash: 
       echo "##vso[task.setvariable variable=testResultsPath]$(echo $(Build.Repository.LocalPath)/build/*/test-results)"
