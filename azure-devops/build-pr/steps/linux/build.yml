@@ -10,7 +10,7 @@ steps:
   # configure (with jtreg)
   # JTREG_PATH is the path to jtreg 4.2.0 set in the docker image linux_amd64_agent
   - bash: |
-      bash configure --with-jtreg=$JTREG_PATH
+      bash configure --with-jtreg=$(JTREG_PATH)
     displayName: "Build: configure"
 
   # make jdk and jre
