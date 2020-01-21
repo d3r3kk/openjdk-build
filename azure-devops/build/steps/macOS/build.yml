@@ -2,7 +2,7 @@
 # macOS build template
 #
 # It properly builds the openjdk chosen and the HSDIS object for macOS.
-# The builds previously mentioned are publish as artifacts for the 
+# The builds previously mentioned are published as artifacts for the 
 # current build pipeline.
 # 
 # Note: The build process is carried out by the AdoptOpenJDK scripts.
