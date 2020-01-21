@@ -1,3 +1,19 @@
+#
+# Linux build template
+#
+# It properly builds the openjdk chosen and the HSDIS object for Linux.
+# The builds previously mentioned are publish as artifacts for the 
+# current build pipeline.
+# 
+# Note: The build process is carried out by the AdoptOpenJDK scripts.
+#
+# @param buildJavaVersion Version to build, e.g., "jdk811", "jdk11u", "jdk".
+# @param buildJavaVariant One of the AdoptOpenJDK supported variants.
+# @param containerRegistry Registry name where docker image is uploaded.
+# @param repository Repository name where docker image is uploaded.
+# @param alsaUri Alsa URI.
+# @param freetypeUri Free type URI.
+
 parameters:
   buildJavaVersion: ""
   buildJavaVariant: "hotspot"
@@ -8,16 +24,19 @@ parameters:
   freetypeUri: "https://buildreqs.blob.core.windows.net/freetype/freetype-2.9.1.tar.gz"
 
 steps:
+  # Print environment variables if System.debug is true
   - bash: |
       printenv
     displayName: "Linux Build: show all env vars"
     condition: eq(variables['system.debug'], 'true')
 
+  # Create build folder and symbolic link to $(Build.SourcesDirectory)
   - bash: |
       mkdir -p $(Agent.BuildDirectory)/openjdk-build/workspace/build
       ln -s $(Build.SourcesDirectory) $(Agent.BuildDirectory)/openjdk-build/workspace/build/src
     displayName: "Linux Build: create symbolic link"
 
+  # Use the AdoptOpenJDK build scripts to build the OpenJDK binaries
   - bash: |
       cd $(Agent.BuildDirectory)/openjdk-build
       CONFIG_ARGS="--with-debug-level=$(BUILD_DEBUG_LEVEL)"
@@ -50,6 +69,7 @@ steps:
       targetPath: "$(Agent.BuildDirectory)/openjdk-build/workspace/artifacts"
     displayName: "Linux Build: upload JKD/JRE artifact"
 
+  # Upload docker image with the openjdk build for testing afterwards
   - task: Docker@2
     inputs:
       containerRegistry: ${{ parameters.containerRegistry }}
@@ -60,12 +80,14 @@ steps:
       tags: "linux-${{ parameters.javaVersion }}-$(Build.BuildNumber)"
     displayName: "Linux Build: build linux docker image"
 
+  # Download binutils binaries to build Linux HSDIS object
   - script: |
       cd $BUILD_HSDIS_DIR
       make BINUTILS=$HSDIS_BINUTILS_PATH ARCH=amd64
     displayName: "Linux Build: create hsdis shared object"
     condition: and(succeeded(), contains(variables.HSDIS_BUILD_PLATFORMS, 'Linux'))
 
+  # Publish Linux HSDIS as build artifact
   - task: PublishPipelineArtifact@1
     inputs:
       artifactName: "$(Agent.OS)_$(Agent.OSArchitecture)_hsdis"
