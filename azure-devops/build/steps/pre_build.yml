@@ -71,7 +71,6 @@ steps:
   # Checkout the sources for the OpenJDK-11-updates repo (save the makejdk script from doing this later)
   # Note: Ensure the JUNIPER_BUILD_BRANCH is set to a valid default.
   - bash: |
-      which git
       git clone --single-branch --branch $(ADOPT_OPENJDK_BUILD_REPO_BRANCH) --depth 1 $(ADOPT_OPENJDK_BUILD_REPO_URI) "$(Agent.BuildDirectory)/openjdk-build"
     displayName: "Pre Build: checkout openjdk-build"
 
