@@ -1,0 +1,26 @@
+parameters:
+  linuxContainer: ""
+  buildJavaVersion: ""
+
+stages:
+  - stage: build_linux_binaries
+    variables:
+      skipComponentGovernanceDetection: true
+    displayName: "Build Linux Binaries"
+    dependsOn: []
+    condition: or(
+        not(variables.BUILD_PLATFORMS),
+        eq(variables.BUILD_PLATFORMS, '*'),
+        contains(variables.BUILD_PLATFORMS, 'Linux')
+      )
+    jobs:
+      - job: build_linux
+        timeoutInMinutes: 120
+        displayName: "Build Linux"
+        pool:
+          vmImage: ubuntu-16.04
+        container: ${{ parameters.linuxContainer }}
+        steps:
+          - template: ../steps/linux/build.yml
+            parameters:
+              buildJavaVersion: ${{ parameters.buildJavaVersion }}
