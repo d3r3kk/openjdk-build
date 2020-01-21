@@ -3,11 +3,7 @@ parameters:
   containerRegistry: "juniper-container-registry"
   repository: "linux_amd64_agent"
 
-steps:
-  - bash: |
-      ls -R /opt/jtreg
-      echo $JTREG_PATH
-      
+steps:      
   # checkout files of the openjdk repo that uses this template
   - checkout: self
 
