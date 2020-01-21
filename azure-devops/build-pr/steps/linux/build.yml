@@ -7,6 +7,8 @@ steps:
   # checkout files of the openjdk repo that uses this template
   - checkout: self
 
+  - bash: ls -R /opt
+
   # configure (with jtreg)
   # JTREG_PATH is the path to jtreg 4.2.0 set in the docker image linux_amd64_agent
   - bash: |
