@@ -119,9 +119,9 @@ containers = [
         base_uri="https://ci.adoptopenjdk.net/job/test.getDependency/lastSuccessfulBuild/artifact",
         dependencies=[
             Dependency(
-                local_path="asm-7.2.jar",
-                blob_path="asm-7.2.jar",
-                resource_uri="/asm-7.2.jar",
+                local_path="asm-7.3.jar",
+                blob_path="asm-7.3.jar",
+                resource_uri="/asm-7.3.jar",
                 unzip=None
             ),
             Dependency(
