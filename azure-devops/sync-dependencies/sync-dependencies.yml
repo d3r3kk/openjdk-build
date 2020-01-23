@@ -22,7 +22,7 @@ jobs:
     steps:
       - task: UsePythonVersion@0
         inputs:
-          versionSpec: "3.8.0"
+          versionSpec: "3.8.1"
 
       - checkout: self
         fetchDepth: 1
