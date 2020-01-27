@@ -28,7 +28,7 @@ function isHotSpot() {
   [ "${VARIANT}" == "${BUILD_VARIANT_CORRETTO}" ]
 }
 
-export MACOSX_DEPLOYMENT_TARGET=10.8
+export MACOSX_DEPLOYMENT_TARGET=10.9
 export BUILD_ARGS="${BUILD_ARGS}"
 
 XCODE_SWITCH_PATH="/";
@@ -46,8 +46,18 @@ else
   if [ "${VARIANT}" == "${BUILD_VARIANT_OPENJ9}" ]; then
     export CONFIGURE_ARGS_FOR_ANY_PLATFORM="${CONFIGURE_ARGS_FOR_ANY_PLATFORM} --with-openssl=fetched --enable-openssl-bundling"
   else
-    export CONFIGURE_ARGS_FOR_ANY_PLATFORM="${CONFIGURE_ARGS_FOR_ANY_PLATFORM} --with-extra-cxxflags=-mmacosx-version-min=10.8"
+    export CONFIGURE_ARGS_FOR_ANY_PLATFORM="${CONFIGURE_ARGS_FOR_ANY_PLATFORM} --with-extra-cxxflags=-mmacosx-version-min=10.9"
   fi
+fi
+
+if [ "${JAVA_TO_BUILD}" == "${JDK11_VERSION}" ]
+then
+  export CONFIGURE_ARGS_FOR_ANY_PLATFORM="${CONFIGURE_ARGS_FOR_ANY_PLATFORM} --with-sysroot=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/"
+  # Login to KeyChain
+  # shellcheck disable=SC2046
+  # shellcheck disable=SC2006
+  security unlock-keychain -p `cat ~/.password`
+  export BUILD_ARGS="${BUILD_ARGS} --codesign-identity 'Developer ID Application: London Jamocha Community CIC'"
 fi
 
 sudo xcode-select --switch "${XCODE_SWITCH_PATH}"
@@ -57,15 +67,17 @@ if [ "$JAVA_FEATURE_VERSION" -gt 11 ]; then
     BOOT_JDK_VERSION="$((JAVA_FEATURE_VERSION-1))"
     BOOT_JDK_VARIABLE="JDK$(echo $BOOT_JDK_VERSION)_BOOT_DIR"
     if [ ! -d "$(eval echo "\$$BOOT_JDK_VARIABLE")" ]; then
-      export $BOOT_JDK_VARIABLE="$PWD/jdk-$BOOT_JDK_VERSION"
-      if [ ! -d "$(eval echo "\$$BOOT_JDK_VARIABLE/Contents/Home/bin")" ]; then
-        mkdir -p "$(eval echo "\$$BOOT_JDK_VARIABLE")"
-        wget -q -O - "https://api.adoptopenjdk.net/v2/binary/releases/openjdk${BOOT_JDK_VERSION}?os=mac&release=latest&arch=${ARCHITECTURE}&heap_size=normal&type=jdk&openjdk_impl=hotspot" | tar xpzf - --strip-components=1 -C "$(eval echo "\$$BOOT_JDK_VARIABLE")"
+      bootDir="$PWD/jdk-$BOOT_JDK_VERSION"
+      # Note we export $BOOT_JDK_VARIABLE (i.e. JDKXX_BOOT_DIR) here
+      # instead of BOOT_JDK_VARIABLE (no '$').
+      export ${BOOT_JDK_VARIABLE}="$bootDir/Contents/Home"
+      if [ ! -d "$bootDir/Contents/Home/bin" ]; then
+        mkdir -p "$bootDir"
+        wget -q -O - "https://api.adoptopenjdk.net/v3/binary/latest/${BOOT_JDK_VERSION}/ga/mac/${ARCHITECTURE}/jdk/hotspot/normal/adoptopenjdk" | tar xpzf - --strip-components=1 -C "$bootDir"
       fi
-      export JDK_BOOT_DIR="$(eval echo "\$$BOOT_JDK_VARIABLE/Contents/Home")"
-    else
-      export JDK_BOOT_DIR="$(eval echo "\$$BOOT_JDK_VARIABLE")"
     fi
+    export JDK_BOOT_DIR="$(eval echo "\$$BOOT_JDK_VARIABLE")"
+    $JDK_BOOT_DIR/bin/java -version | sed 's/^/BOOT JDK: /'
 fi
 
 if [ "${VARIANT}" == "${BUILD_VARIANT_OPENJ9}" ]; then
@@ -82,4 +94,3 @@ if [ "${VARIANT}" == "${BUILD_VARIANT_OPENJ9}" ]; then
     export CONFIGURE_ARGS_FOR_ANY_PLATFORM="${CONFIGURE_ARGS_FOR_ANY_PLATFORM} --with-xcode-path=/Applications/Xcode.app --with-openj9-cc=/Applications/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --with-openj9-cxx=/Applications/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --with-openj9-developer-dir=/Applications/Xcode7/Xcode.app/Contents/Developer"
   fi
 fi
-

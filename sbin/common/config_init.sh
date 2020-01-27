@@ -63,6 +63,7 @@ JDK_PATH
 JRE_PATH
 TEST_IMAGE_PATH
 JVM_VARIANT
+MACOSX_CODESIGN_IDENTITY
 MAKE_ARGS_FOR_ANY_PLATFORM
 MAKE_COMMAND_NAME
 NUM_PROCESSORS
@@ -199,6 +200,9 @@ function parseConfigurationArguments() {
 
         "--make-args" )
         BUILD_CONFIG[USER_SUPPLIED_MAKE_ARGS]="$1"; shift;;
+
+        "--codesign-identity" )
+        BUILD_CONFIG[MACOSX_CODESIGN_IDENTITY]="$1"; shift;;
 
         "--clean-docker-build" | "-c" )
         BUILD_CONFIG[CLEAN_DOCKER_BUILD]=true;;
@@ -375,6 +379,8 @@ function configDefaults() {
 
   BUILD_CONFIG[SIGN]="false"
   BUILD_CONFIG[JDK_BOOT_DIR]=""
+
+  BUILD_CONFIG[MACOSX_CODESIGN_IDENTITY]=${BUILD_CONFIG[MACOSX_CODESIGN_IDENTITY]:-""}
 
   BUILD_CONFIG[NUM_PROCESSORS]="1"
   BUILD_CONFIG[TARGET_FILE_NAME]="OpenJDK.tar.gz"

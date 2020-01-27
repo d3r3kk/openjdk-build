@@ -79,6 +79,12 @@ configuringBootJDKConfigureParameter()
   addConfigureArgIfValueIsNotEmpty "--with-boot-jdk=" "${BUILD_CONFIG[JDK_BOOT_DIR]}"
 }
 
+# Configure the boot JDK
+configuringMacOSCodesignParameter()
+{
+  addConfigureArgIfValueIsNotEmpty "--with-macosx-codesign-identity=" "\"${BUILD_CONFIG[MACOSX_CODESIGN_IDENTITY]}\""
+}
+
 # Get the OpenJDK update version and build version
 getOpenJDKUpdateAndBuildVersion()
 {
@@ -174,7 +180,7 @@ configuringVersionStringParameter()
     fi
 
     if [ "${BUILD_CONFIG[BUILD_VARIANT]}" == "${BUILD_VARIANT_HOTSPOT}" ] && [ ${BUILD_CONFIG[ADOPT_PATCHES]} == true ]; then
-      addConfigureArg "--with-company-name=" "Microsoft8.$BUILD_BUILDID"
+      addConfigureArg "--with-vendor-name=" "Microsoft8.$BUILD_BUILDID"
     fi
 
     # Set the update version (e.g. 131), this gets passed in from the calling script
@@ -246,15 +252,10 @@ buildingTheRestOfTheConfigParameters()
     addConfigureArg "--enable-ccache" ""
   fi
 
-  addConfigureArg "--with-alsa=" "${BUILD_CONFIG[WORKSPACE_DIR]}/${BUILD_CONFIG[WORKING_DIR]}/installedalsa"
-
   # Point-in-time dependency for openj9 only
   if [[ "${BUILD_CONFIG[BUILD_VARIANT]}" == "${BUILD_VARIANT_OPENJ9}" ]] ; then
     addConfigureArg "--with-freemarker-jar=" "${BUILD_CONFIG[WORKSPACE_DIR]}/${BUILD_CONFIG[WORKING_DIR]}/freemarker-${FREEMARKER_LIB_VERSION}/freemarker.jar"
   fi
-
-  addConfigureArg "--with-x=" "/usr/include/X11"
-
 
   if [ "${BUILD_CONFIG[OPENJDK_CORE_VERSION]}" == "${JDK8_CORE_VERSION}" ] ; then
     # We don't want any extra debug symbols - ensure it's set to release,
@@ -262,6 +263,8 @@ buildingTheRestOfTheConfigParameters()
     addConfigureArg "--with-debug-level=" "release"
     addConfigureArg "--disable-zip-debug-info" ""
     addConfigureArg "--disable-debug-symbols" ""
+    addConfigureArg "--with-x=" "/usr/include/X11"
+    addConfigureArg "--with-alsa=" "${BUILD_CONFIG[WORKSPACE_DIR]}/${BUILD_CONFIG[WORKING_DIR]}/installedalsa"
   else
     addConfigureArg "--with-debug-level=" "release"
     addConfigureArg "--with-native-debug-symbols=" "none"
@@ -296,6 +299,7 @@ configureCommandParameters()
 {
   configuringVersionStringParameter
   configuringBootJDKConfigureParameter
+  configuringMacOSCodesignParameter
 
   if [[ "$OSTYPE" == "cygwin" ]] || [[ "$OSTYPE" == "msys" ]]; then
     echo "Windows or Windows-like environment detected, skipping configuring environment for custom Boot JDK and other 'configure' settings."
@@ -619,7 +623,15 @@ getFirstTagFromOpenJDKGitRepo()
     else
       git fetch --tags "${BUILD_CONFIG[WORKSPACE_DIR]}/${BUILD_CONFIG[WORKING_DIR]}/${BUILD_CONFIG[OPENJDK_SOURCE_DIR]}"
       revList=$(git rev-list --tags --topo-order --max-count=$GIT_TAGS_TO_SEARCH)
-      firstMatchingNameFromRepo=$(git describe --tags $revList | grep jdk | grep -v openj9 | grep -v _adopt | grep -v "\-ga" | head -1)
+      if [[ "${BUILD_CONFIG[OPENJDK_CORE_VERSION]}" == "${JDKHEAD_VERSION}" ]]; then
+        # For the development tree jdk/jdk, there might be two major versions in development
+        # in parallel. One in stabilization mode, and the currently active developement line
+        # Thus, add an explicit grep on the specified FEATURE_VERSION so as to appropriately
+	# set the correct build number later on.
+        firstMatchingNameFromRepo=$(git describe --tags $revList | grep "jdk-${BUILD_CONFIG[OPENJDK_FEATURE_NUMBER]}" | grep -v openj9 | grep -v _adopt | grep -v "\-ga" | head -1)
+      else
+        firstMatchingNameFromRepo=$(git describe --tags $revList | grep jdk | grep -v openj9 | grep -v _adopt | grep -v "\-ga" | head -1)
+      fi
       # this may not find the correct tag if there are multiples on the commit so find commit
       # that contains this tag and then use `git tag` to find the real tag
       revList=$(git rev-list -n 1 $firstMatchingNameFromRepo --)
