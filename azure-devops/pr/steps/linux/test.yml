@@ -27,7 +27,7 @@ steps:
     displayName: "[Pre test] Extract JDK"
 
   # run tests via jtreg
-  - bash: bash $JTREG_PATH/bin/jtreg -v -jdk:$(Pipeline.Workspace)/jdk test/$(JTREG_TESTS)
+  - bash: bash $JTREG_PATH/bin/jtreg -agentvm -v -jdk:$(Pipeline.Workspace)/jdk test/$(JTREG_TESTS)
     displayName: "[Test] jtreg $(JTREG_TESTS)"
 
   # Publish test results as pipeline artifact
