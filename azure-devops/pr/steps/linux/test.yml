@@ -28,6 +28,7 @@ steps:
 
   # Run tests via jtreg (https://openjdk.java.net/jtreg/index.html)
   # JTREG_PATH is the path to jtreg 4.2.0 set in the docker image linux_amd64_agent
+  # To update JTREG, update the linux_amd64_agent's Dockerfile
   - bash: bash $JTREG_PATH/bin/jtreg -agentvm -v -jdk:$(Pipeline.Workspace)/jdk test/$(JTREG_TESTS)
     displayName: "[Test] jtreg $(JTREG_TESTS)"
 
