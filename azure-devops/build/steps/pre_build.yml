@@ -1,7 +1,16 @@
+# Pre build template
+#
+# Steps needed before any build for any platform,
+# which includes setting and verifying required variables, and
+# downloading adopt-build repo to build the openjdk afterwards.
+#
+
 parameters:
   buildJavaVersion: ""
 
 steps:
+  # Verify required enviroment variables to build the openjdk.
+  # If any of them is not set, the pipeline does not proceed to build and ends here.
   - bash: |
       ERR_MESSAGE_MISSING_ENV=''
 
@@ -41,10 +50,12 @@ steps:
       BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
     displayName: "Pre Build: check required environment variables"
 
+  # Set the HOME environment variable
   - script: |
       echo ##vso[task.setvariable variable=HOME]$(Agent.BuildDirectory)
     displayName: "Pre Build: set HOME environment variable"
 
+  # Set crlf to keep original EOL when checkout
   - bash: |
       git config --global core.autocrlf input
     displayName: "Pre Build: configure crlf option"
@@ -63,12 +74,14 @@ steps:
       git clone --single-branch --branch $(ADOPT_OPENJDK_BUILD_REPO_BRANCH) --depth 1 $(ADOPT_OPENJDK_BUILD_REPO_URI) "$(Agent.BuildDirectory)/openjdk-build"
     displayName: "Pre Build: checkout openjdk-build"
 
+  # Cache dependencies needed by the adopt's build
   - task: Cache@2
     inputs:
       key: 'gradle | "$(Agent.OS)"'
       path: $(Agent.BuildDirectory)/openjdk-build/pipelines/gradle-cache
     displayName: "Pre Build: cache gradle"
 
+  # Adjust source branch to build the openjdk on
   - bash: |
       # RH is just the prepended `refs/heads/` that we want to remove to get the branch name
       RH='refs/heads/';
@@ -86,6 +99,7 @@ steps:
       echo "##vso[task.setvariable variable=JAVA_SOURCE_REPO_BRANCH]$JAVA_SOURCE_REPO_BRANCH"
     displayName: "Pre Build: set build source branch"
 
+  # Set jdk variant and architecure variables. Used in the build
   - bash: |
       echo "##vso[task.setvariable variable=VARIANT]hotspot"
       echo "##vso[task.setvariable variable=ARCHITECTURE]x64"
@@ -102,6 +116,7 @@ steps:
       echo "##vso[task.setvariable variable=OPENJDK_TAG]$tag"
     displayName: "Pre Build: set hg tag"
 
+  # Set OPENJDK_OUTPUT_FILE_PREFIX to name openjdk file after build
   - bash: |
       if [ "$BUILD_JAVA_VERSION" == "jdk" ] || [ "$BUILD_JAVA_VERSION" == "jdk11u" ]; then
         build=${OPENJDK_TAG##*+}
@@ -126,6 +141,7 @@ steps:
       BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
     displayName: "Pre Build: set file prefix"
 
+  # Set BUILD_HSDIS_DIR variable to build hsdis for each platform
   - bash: |
       if [ "$BUILD_HSDIS_DIR" != "" ]
       then
@@ -134,10 +150,10 @@ steps:
           TEMP=
           case "${{ parameters.buildJavaVersion }}" in
             "jdk8u")
-                    TEMP="$(Build.SourcesDirectory)/workspace/build/src/hotspot/src/share/tools/hsdis"
+                    TEMP="$(Build.SourcesDirectory)/hotspot/src/share/tools/hsdis"
                     ;;
             *)
-                    TEMP="$(Build.SourcesDirectory)/workspace/build/src/src/utils/hsdis"
+                    TEMP="$(Build.SourcesDirectory)/src/utils/hsdis"
                     ;;
           esac
           echo "##vso[task.setvariable variable=BUILD_HSDIS_DIR]$TEMP"
