@@ -20,7 +20,7 @@ steps:
       artifactName: "$(Agent.OS)_$(Agent.OSArchitecture)_JDK"
       itemPattern: "**"
       targetPath: "$(Pipeline.Workspace)/jdk"
-    displayName: "[Pre test] download JDK artifact"
+    displayName: "[Pre test] Download JDK artifact"
 
   # Extract JDK
   - bash: tar -xvf $(Pipeline.Workspace)/jdk/jdk.tar.gz -C $(Pipeline.Workspace)/jdk
@@ -42,7 +42,7 @@ steps:
       failTaskOnFailedTests: false
       testRunTitle: "$(Agent.OS)_$(Agent.OSArchitecture)_$(TEST_RESULTS_ARTIFACT_NAME)"
       publishRunAttachments: true
-    displayName: "[Post test] publish JTwork test results"
+    displayName: "[Post test] Publish JTwork test results"
     condition: succeededOrFailed()
 
   # Publish test report as pipeline artifact
@@ -52,4 +52,4 @@ steps:
       artifact: '$(Agent.OS)_$(Agent.OSArchitecture)_JTreport_$(TEST_RESULTS_ARTIFACT_NAME)'
       publishLocation: 'pipeline'
     condition: succeededOrFailed()
-    displayName: "[Post test] publish JTreport as artifact"
+    displayName: "[Post test] Publish JTreport as artifact"

@@ -27,7 +27,7 @@ steps:
       artifact: '$(Agent.OS)_$(Agent.OSArchitecture)_JDK'
       publishLocation: 'pipeline'
     condition: succeededOrFailed()
-    displayName: "[Post build] Publish test-results as artifact" 
+    displayName: "[Post build] Publish JDK as artifact" 
 
   
 
