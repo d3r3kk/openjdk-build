@@ -42,6 +42,7 @@ steps:
       failTaskOnFailedTests: false
       testRunTitle: "$(Agent.OS)_$(Agent.OSArchitecture)_$(TEST_RESULTS_ARTIFACT_NAME)"
       publishRunAttachments: true
+    displayName: "[Post test] publish JTwork test results"
     condition: succeededOrFailed()
 
   # Publish test report as pipeline artifact
