@@ -1,0 +1,55 @@
+# 
+# Test Linux template
+#
+# It runs jtreg tests on the jdk previously built,
+# and then uploads the results as artifact
+#
+
+steps:
+  # checkout files of the openjdk repo that uses this template
+  - checkout: self
+
+  # Create folder to download JDK
+  - bash: mkdir -p $(Pipeline.Workspace)/jdk
+    displayName: "[Pre test] Create folder to download JDK artifact"
+
+  # Download JDK artifact
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      buildType: "current"
+      artifactName: "$(Agent.OS)_$(Agent.OSArchitecture)_JDK"
+      itemPattern: "**"
+      targetPath: "$(Pipeline.Workspace)/jdk"
+    displayName: "[Pre test] Download JDK artifact"
+
+  # Extract JDK
+  - bash: tar -xvf $(Pipeline.Workspace)/jdk/jdk.tar.gz -C $(Pipeline.Workspace)/jdk
+    displayName: "[Pre test] Extract JDK"
+
+  # Run tests via jtreg (https://openjdk.java.net/jtreg/index.html)
+  # JTREG_PATH is the path to jtreg 4.2.0 set in the docker image linux_amd64_agent
+  # To update JTREG, update the linux_amd64_agent's Dockerfile
+  - bash: bash $JTREG_PATH/bin/jtreg -agentvm -v -xml -jdk:$(Pipeline.Workspace)/jdk test/$(JTREG_TESTS)
+    displayName: "[Test] jtreg $(JTREG_TESTS)"
+
+  # Publish test results to pipeline
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/*.jtr.xml' 
+      searchFolder: '$(Build.SourcesDirectory)/JTwork'
+      mergeTestResults: true
+      failTaskOnFailedTests: false
+      testRunTitle: "$(Agent.OS)_$(Agent.OSArchitecture)_$(TEST_RESULTS_ARTIFACT_NAME)"
+      publishRunAttachments: true
+    displayName: "[Post test] Publish JTwork test results"
+    condition: succeededOrFailed()
+
+  # Publish test report as pipeline artifact
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '$(Build.SourcesDirectory)/JTreport'
+      artifact: '$(Agent.OS)_$(Agent.OSArchitecture)_JTreport_$(TEST_RESULTS_ARTIFACT_NAME)'
+      publishLocation: 'pipeline'
+    condition: succeededOrFailed()
+    displayName: "[Post test] Publish JTreport as artifact"

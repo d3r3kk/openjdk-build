@@ -1,0 +1,33 @@
+# 
+# Build Linux template
+#
+# It runs the 'configure' and 'make' commands to build the jdk,
+# and then uploads the jdk image as artifact for later tests
+
+steps:      
+  # checkout files of the openjdk repo that uses this template
+  - checkout: self
+
+  # Run configure to set up the upcoming building process
+  - bash: bash configure
+    displayName: "[Build] configure"
+
+  # make JDK/JRE
+  - bash: make images
+    displayName: "[Build] make"
+
+  # Compress JDK image
+  - bash: tar -zvcf $(Pipeline.Workspace)/jdk.tar.gz -C $(Build.SourcesDirectory)/build/*/images/jdk .
+    displayName: "[Post build] Compress jdk"
+
+  # Publish JDK/JRE binaries as build artifact
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '$(Pipeline.Workspace)/jdk.tar.gz'
+      artifact: '$(Agent.OS)_$(Agent.OSArchitecture)_JDK'
+      publishLocation: 'pipeline'
+    condition: succeededOrFailed()
+    displayName: "[Post build] Publish JDK as artifact" 
+
+  
+
