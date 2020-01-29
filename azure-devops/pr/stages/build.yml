@@ -7,6 +7,7 @@
 
 parameters:
   linuxContainer: ""
+  buildJavaVersion: ""
 
 stages:
   - stage: build_linux_binaries
@@ -28,4 +29,6 @@ stages:
         container: ${{ parameters.linuxContainer }}
         steps:
           - template: ../steps/linux/build.yml
+            parameters:
+              buildJavaVersion: "${{ parameters.buildJavaVersion }}"
       
