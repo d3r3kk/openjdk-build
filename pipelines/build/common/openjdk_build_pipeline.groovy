@@ -54,17 +54,18 @@ class Build {
     }
 
 
-    Integer getJavaVersionNumber() {
+	Integer getJavaVersionNumber() {
+		def javaToBuild = buildConfig.JAVA_TO_BUILD
         // version should be something like "jdk8u" or "jdk" for HEAD
-        def matcher = (buildConfig.JAVA_TO_BUILD =~ /(\d+)/)
-        if (matcher.find()) {
-            List<String> list = matcher[0] as List
-            return Integer.parseInt(list[1] as String)
-        } else if ("jdk".equalsIgnoreCase(buildConfig.JAVA_TO_BUILD.trim())) {
+        Matcher matcher = javaToBuild =~ /.*?(?<version>\d+).*?/
+        if (matcher.matches()) {
+            return Integer.parseInt(matcher.group('version'))
+        } else if ("jdk".equalsIgnoreCase(javaToBuild.trim())) {
             // This needs to get updated when JDK HEAD version updates
             return Integer.valueOf("15")
         } else {
-            return Integer.valueOf("-1")
+            context.error("Failed to read java version '${javaToBuild}'")
+            throw new Exception()
         }
     }
 
@@ -148,7 +149,7 @@ class Build {
     def sign(VersionInfo versionInfo) {
         // Sign and archive jobs if needed
         // TODO: This version info check needs to be updated when the notarization fix gets applied to other versions.
-        if (buildConfig.TARGET_OS == "windows" || (buildConfig.TARGET_OS == "mac" && versionInfo.major != 11)) {
+        if (buildConfig.TARGET_OS == "windows" || (buildConfig.TARGET_OS == "mac" && versionInfo.major == 8) || (buildConfig.TARGET_OS == "mac" && versionInfo.major == 13)) {
             context.node('master') {
                 context.stage("sign") {
                     def filter = ""
@@ -161,7 +162,6 @@ class Build {
                         certificate = "C:\\Users\\jenkins\\windows.p12"
                         nodeFilter = "${nodeFilter}&&build"
 
-                    // TODO: This version info check needs to be updated when the notarization fix gets applied to other versions.
                     } else if (buildConfig.TARGET_OS == "mac") {
                         filter = "**/OpenJDK*_mac_*.tar.gz"
                         certificate = "\"Developer ID Application: London Jamocha Community CIC\""
