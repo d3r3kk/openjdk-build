@@ -1,5 +1,5 @@
 # 
-# Test Linux template
+# Test macOS template
 #
 # It runs jtreg tests on the jdk previously built,
 # and then uploads the results as artifact
@@ -14,14 +14,20 @@ steps:
   # checkout files of the openjdk repo that uses this template
   - checkout: self
 
-  # Set JDK_BOOT_DIR
-  - bash: |
-      case ${{ parameters.buildJavaVersion }} in
-            jdk8u)    echo "##vso[task.setvariable variable=JDK_BOOT_DIR]$JDK8_BOOT_DIR";;
-            jdk11u)   echo "##vso[task.setvariable variable=JDK_BOOT_DIR]$JDK10_BOOT_DIR";;
-            jdk)      echo "##vso[task.setvariable variable=JDK_BOOT_DIR]$JDK13_BOOT_DIR";;
-      esac
-    displayName: "[Pre test] Set JDK_BOOT_DIR"
+  # Download jtreg 4.2.0
+  - task: UniversalPackages@0
+    inputs:
+      command: 'download'
+      downloadDirectory: '$(Pipeline.Workspace)'
+      feedsToUse: 'internal'
+      vstsFeed: 'c4530ae8-1fc6-48b4-8861-0cfc3363bf84/99bf70fb-4655-4785-8d4e-c2197700c237'
+      vstsFeedPackage: 'b5a5adcc-ae25-4bb9-a55e-fe1cd7d6aa71'
+      vstsPackageVersion: '4.2.0'
+    displayName: "[Pre test] Download jtreg"
+
+  # Extract jtreg
+  - bash: tar -xvf $(Pipeline.Workspace)/jtreg-4.2.0-tip.tar.gz -C $(Pipeline.Workspace)
+    displayName: "[Pre test] Extract jtreg"
 
   # Download build artifact
   - task: DownloadPipelineArtifact@2
@@ -37,8 +43,6 @@ steps:
     displayName: "[Pre test] Extract build"
 
   # Run tests via jtreg (https://openjdk.java.net/jtreg/index.html)
-  # JT_HOME is the path to jtreg 4.2.0 set in the docker image linux_amd64_agent
-  # To update JTREG, update the linux_amd64_agent's Dockerfile
   - bash: |
       JTREG_BASIC_OPTIONS="-agentvm \
               -verbose:fail,error,summary \
@@ -46,17 +50,17 @@ steps:
               -automatic \
               -xml \
               -vmoption:-Xmx512m \
-              -testjdk:build/linux-x86_64-normal-server-release/images/jdk"
+              -testjdk:build/macosx-x86_64-normal-server-release/images/jdk"
       if [ -n "$(NATIVE_PATH)" ]
       then
-        JTREG_NATIVE="-nativepath:build/linux-x86_64-normal-server-release/images/test/$(NATIVE_PATH)"
+        JTREG_NATIVE="-nativepath:build/macosx-x86_64-normal-server-release/images/test/$(NATIVE_PATH)"
       fi 
       if [ -n "$(PROBLEM_LIST)" ]
       then
         JTREG_PROBLEM_LIST="-exclude:test/$(PROBLEM_LIST)"
       fi
 
-      $(JDK_BOOT_DIR)/bin/java -Xmx512m -jar $JT_HOME/lib/jtreg.jar \
+      java -Xmx512m -jar $(Pipeline.Workspace)/jtreg/lib/jtreg.jar \
                       $JTREG_BASIC_OPTIONS \
                       $JTREG_NATIVE \
                       $JTREG_PROBLEM_LIST \

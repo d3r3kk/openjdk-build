@@ -34,3 +34,24 @@ stages:
             parameters:
               buildJavaVersion: "${{ parameters.buildJavaVersion }}"
       
+
+  - stage: build_macOS_binaries
+    variables:
+      skipComponentGovernanceDetection: true
+    displayName: "Build macOS Binaries"
+    dependsOn: []
+    condition: or(
+        not(variables.BUILD_PLATFORMS),
+        eq(variables.BUILD_PLATFORMS, '*'),
+        contains(variables.BUILD_PLATFORMS, 'macOS')
+      )
+    jobs:
+      - job: build_macOS
+        timeoutInMinutes: 120
+        displayName: "Build macOS"
+        pool:
+          vmImage: macOS-10.14
+        steps:
+          - template: ../steps/macOS/build.yml
+            parameters:
+              buildJavaVersion: "${{ parameters.buildJavaVersion }}"

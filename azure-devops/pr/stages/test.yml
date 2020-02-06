@@ -50,4 +50,42 @@ stages:
               JTREG_TESTS: "jdk:tier1_part3"
               NATIVE_PATH: "jdk/jtreg/native"
               PROBLEM_LIST: "jdk/ProblemList.txt"
-            
+              
+  - stage: test_macOS_binaries
+    variables:
+      skipComponentGovernanceDetection: true
+    displayName: "Test macOS Binaries"
+    dependsOn: build_macOS_binaries
+    condition: and(
+      or(
+        not(variables.BUILD_PLATFORMS),
+        eq(variables.BUILD_PLATFORMS, '*'),
+        contains(variables.BUILD_PLATFORMS, 'macOS')
+      ), succeeded('build_macOS_binaries'))
+    jobs:
+      - job: test_macOS
+        displayName: "Test macOS"
+        pool:
+          vmImage: macOS-10.14
+        steps:
+          - template: ../steps/macOS/test.yml
+            parameters:
+              buildJavaVersion: "${{ parameters.buildJavaVersion }}"
+        strategy:
+          matrix:
+            JDK_tier1_part1: 
+              TEST_RESULTS_ARTIFACT_NAME: "JDK_tier1_part1"
+              JTREG_TESTS: "jdk:tier1_part1"
+              NATIVE_PATH: "jdk/jtreg/native"
+              PROBLEM_LIST: "jdk/ProblemList.txt"
+            JDK_tier1_part2: 
+              TEST_RESULTS_ARTIFACT_NAME: "JDK_tier1_part2"
+              JTREG_TESTS: "jdk:tier1_part2"
+              NATIVE_PATH: "jdk/jtreg/native"
+              PROBLEM_LIST: "jdk/ProblemList.txt"
+            JDK_tier1_part3: 
+              TEST_RESULTS_ARTIFACT_NAME: "JDK_tier1_part3"
+              JTREG_TESTS: "jdk:tier1_part3"
+              NATIVE_PATH: "jdk/jtreg/native"
+              PROBLEM_LIST: "jdk/ProblemList.txt"
+                      
