@@ -4,9 +4,12 @@
 # It defines the stages to test the JDK for different platforms
 # 
 # @param linuxContainer Container to test the JDK in
+# @param buildJavaVersion Java version to build and test, 
+#                         e.g., "jdk", "jdk8u", "jdk11u".
 
 parameters:
     linuxContainer: ""
+    buildJavaVersion: ""
 
 stages:
   - stage: test_linux_binaries
@@ -28,14 +31,23 @@ stages:
         container: ${{ parameters.linuxContainer }}
         steps:
           - template: ../steps/linux/test.yml
+            parameters:
+              buildJavaVersion: "${{ parameters.buildJavaVersion }}"
         strategy:
           matrix:
-            JDK_tier1_part1:
-              JTREG_TESTS: 'jdk:tier1_part1'
-              TEST_RESULTS_ARTIFACT_NAME: 'JDK_tier1_part1'
-            JDK_tier1_part2:
-              JTREG_TESTS: 'jdk:tier1_part2'
-              TEST_RESULTS_ARTIFACT_NAME: 'JDK_tier1_part2'
-            JDK_tier1_part3:
-              JTREG_TESTS: 'jdk:tier1_part3'
-              TEST_RESULTS_ARTIFACT_NAME: 'JDK_tier1_part3'
+            JDK_tier1_part1: 
+              TEST_RESULTS_ARTIFACT_NAME: "JDK_tier1_part1"
+              JTREG_TESTS: "jdk:tier1_part1"
+              NATIVE_PATH: "jdk/jtreg/native"
+              PROBLEM_LIST: "jdk/ProblemList.txt"
+            JDK_tier1_part2: 
+              TEST_RESULTS_ARTIFACT_NAME: "JDK_tier1_part2"
+              JTREG_TESTS: "jdk:tier1_part2"
+              NATIVE_PATH: "jdk/jtreg/native"
+              PROBLEM_LIST: "jdk/ProblemList.txt"
+            JDK_tier1_part3: 
+              TEST_RESULTS_ARTIFACT_NAME: "JDK_tier1_part3"
+              JTREG_TESTS: "jdk:tier1_part3"
+              NATIVE_PATH: "jdk/jtreg/native"
+              PROBLEM_LIST: "jdk/ProblemList.txt"
+            

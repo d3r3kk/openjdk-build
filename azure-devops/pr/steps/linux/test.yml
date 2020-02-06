@@ -4,33 +4,62 @@
 # It runs jtreg tests on the jdk previously built,
 # and then uploads the results as artifact
 #
+# @param buildJavaVersion Java version to build and test, 
+#                         e.g., "jdk", "jdk8u", "jdk11u".
+
+parameters:
+  buildJavaVersion: ""
 
 steps:
+  # Set JDK_BOOT_DIR
+  - bash: |
+      case ${{ parameters.buildJavaVersion }} in
+            jdk8u)    echo "##vso[task.setvariable variable=JDK_BOOT_DIR]$JDK8_BOOT_DIR";;
+            jdk11u)   echo "##vso[task.setvariable variable=JDK_BOOT_DIR]$JDK10_BOOT_DIR";;
+            jdk)      echo "##vso[task.setvariable variable=JDK_BOOT_DIR]$JDK13_BOOT_DIR";;
+      esac
+    displayName: "[Pre test] Set JDK_BOOT_DIR"
+
   # checkout files of the openjdk repo that uses this template
   - checkout: self
 
-  # Create folder to download JDK
-  - bash: mkdir -p $(Pipeline.Workspace)/jdk
-    displayName: "[Pre test] Create folder to download JDK artifact"
-
-  # Download JDK artifact
+  # Download build artifact
   - task: DownloadPipelineArtifact@2
     inputs:
       buildType: "current"
-      artifactName: "$(Agent.OS)_$(Agent.OSArchitecture)_JDK"
+      artifactName: "$(Agent.OS)_$(Agent.OSArchitecture)_build"
       itemPattern: "**"
-      targetPath: "$(Pipeline.Workspace)/jdk"
-    displayName: "[Pre test] Download JDK artifact"
+      targetPath: "$(Build.SourcesDirectory)"
+    displayName: "[Pre test] Download build artifact"
 
   # Extract JDK
-  - bash: tar -xvf $(Pipeline.Workspace)/jdk/jdk.tar.gz -C $(Pipeline.Workspace)/jdk
-    displayName: "[Pre test] Extract JDK"
+  - bash: tar -xvf $(Build.SourcesDirectory)/build.tar.gz
+    displayName: "[Pre test] Extract build"
 
   # Run tests via jtreg (https://openjdk.java.net/jtreg/index.html)
-  # JTREG_PATH is the path to jtreg 4.2.0 set in the docker image linux_amd64_agent
+  # JT_HOME is the path to jtreg 4.2.0 set in the docker image linux_amd64_agent
   # To update JTREG, update the linux_amd64_agent's Dockerfile
-  - bash: bash $JTREG_PATH/bin/jtreg -agentvm -v -xml -jdk:$(Pipeline.Workspace)/jdk test/$(JTREG_TESTS)
-    displayName: "[Test] jtreg $(JTREG_TESTS)"
+  - bash: |
+      JTREG_BASIC_OPTIONS="-agentvm \
+              -verbose:fail,error,summary \
+              -ignore:quiet \
+              -automatic \
+              -xml \
+              -vmoption:-Xmx512m \
+              -testjdk:build/linux-x86_64-normal-server-release/images/jdk"
+      if [ -n "$(NATIVE_PATH)" ]
+        JTREG_NATIVE="-nativepath:build/linux-x86_64-normal-server-release/images/test/$(NATIVE_PATH)"
+      fi 
+      if [ -n "$(PROBLEM_LIST)" ]
+        JTREG_PROBLEM_LIST="-exclude:test/$(PROBLEM_LIST)"
+      fi
+
+      $(JDK_BOOT_DIR)/bin/java -Xmx512m -jar $JT_HOME/lib/jtreg.jar \
+                      $JTREG_BASIC_OPTIONS \
+                      $JTREG_NATIVE \
+                      $JTREG_PROBLEM_LIST \
+                      test/$(JTREG_TESTS)
+    displayName: "[Test] $(JTREG_TESTS)"
 
   # Publish test results to pipeline
   - task: PublishTestResults@2
