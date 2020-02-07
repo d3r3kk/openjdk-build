@@ -39,6 +39,7 @@ steps:
       tar -zvcf $(Pipeline.Workspace)/build.tar.gz \
           build/*/images/jdk \
           build/*/images/test
+    condition: succeeded()
     displayName: "[Post build] Compress build"
 
   # Publish build binaries as build artifact
@@ -47,7 +48,7 @@ steps:
       targetPath: '$(Pipeline.Workspace)/build.tar.gz'
       artifact: '$(Agent.OS)_$(Agent.OSArchitecture)_build'
       publishLocation: 'pipeline'
-    condition: succeededOrFailed()
+    condition: succeeded()
     displayName: "[Post build] Publish build as artifact" 
 
   

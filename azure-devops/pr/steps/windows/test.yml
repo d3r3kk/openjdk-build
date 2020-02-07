@@ -4,6 +4,9 @@
 # It runs jtreg tests on the jdk previously built,
 # and then uploads the results as artifact
 
+parameters:
+  workspaceDirectory: "/cygdrive/d/a/1"
+
 steps:
   # Download jtreg 4.2.0
   - task: UniversalPackages@0
@@ -17,7 +20,8 @@ steps:
     displayName: "[Pre test] Download jtreg"
 
   # Extract jtreg
-  - bash: tar -xvf $(Pipeline.Workspace)/jtreg-4.2.0-tip.tar.gz -C $(Pipeline.Workspace)
+  - script: bash.exe -c "tar -xvf ${{ parameters.workspaceDirectory }}/jtreg-4.2.0-tip.tar.gz 
+                              -C ${{ parameters.workspaceDirectory }}"
     displayName: "[Pre test] Extract jtreg"
 
   # Download build artifact
@@ -30,33 +34,25 @@ steps:
     displayName: "[Pre test] Download build artifact"
 
   # Extract JDK
-  - bash: tar -xvf $(Build.SourcesDirectory)/build.tar.gz
+  - script: bash.exe -c "tar -xvf build.tar.gz"
     displayName: "[Pre test] Extract build"
 
   # Run tests via jtreg (https://openjdk.java.net/jtreg/index.html)
-  - bash: |
-      JTREG_BASIC_OPTIONS="-agentvm \
-              -verbose:fail,error,summary \
-              -ignore:quiet \
-              -automatic \
-              -xml \
-              -vmoption:-Xmx512m \
-              -timeoutFactor:4 \
-              -testjdk:build/macosx-x86_64-normal-server-release/images/jdk"
-      if [ -n "$(NATIVE_PATH)" ]
-      then
-        JTREG_NATIVE="-nativepath:build/macosx-x86_64-normal-server-release/images/test/$(NATIVE_PATH)"
-      fi 
-      if [ -n "$(PROBLEM_LIST)" ]
-      then
-        JTREG_PROBLEM_LIST="-exclude:test/$(PROBLEM_LIST)"
-      fi
+  - script: |
+      SET JTREG_BASIC_OPTIONS=-agentvm -verbose:fail,error,summary -ignore:quiet -automatic -xml -vmoption:-Xmx512m -timeoutFactor:4 -testjdk:build/windows-x86_64-normal-server-release/images/jdk
 
-      java -Xmx512m -jar $(Pipeline.Workspace)/jtreg/lib/jtreg.jar \
-                      $JTREG_BASIC_OPTIONS \
-                      $JTREG_NATIVE \
-                      $JTREG_PROBLEM_LIST \
-                      test/$(JTREG_TESTS)
+      IF DEFINED NATIVE_PATH (
+        SET JTREG_NATIVE=-nativepath:build/windows-x86_64-normal-server-release/images/test/%NATIVE_PATH%
+      ) ELSE (
+        SET "JTREG_NATIVE= "
+      )
+      IF DEFINED PROBLEM_LIST (
+        SET JTREG_PROBLEM_LIST=-exclude:test/%PROBLEM_LIST%
+      ) ELSE (
+        SET "JTREG_PROBLEM_LIST= "
+      )
+
+      bash.exe -c "java -Xmx512m -jar `cygpath -w ${{ parameters.workspaceDirectory }}/jtreg/lib/jtreg.jar` %JTREG_BASIC_OPTIONS% %JTREG_NATIVE% %JTREG_PROBLEM_LIST% test/%JTREG_TESTS%"
     displayName: "[Test] $(JTREG_TESTS)"
 
   # Publish test results to pipeline

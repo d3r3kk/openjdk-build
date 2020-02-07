@@ -3,47 +3,8 @@
 #
 # It runs the 'configure' and 'make' commands to build the jdk,
 # and then uploads the jdk image as artifact for later tests
-# @param buildJavaVersion Java version to build and test, 
-#                         e.g., "jdk", "jdk8u", "jdk11u".
-
-parameters:
-  buildJavaVersion: ""
 
 steps:
-  # checkout files of the openjdk repo that uses this template
-  - checkout: self
-
-  # Install necessary dependencies
-  - script: |
-      brew install autoconf
-    displayName: "[Pre build] Install dependencies"
-  
-  # Download and extract the corresponding version
-  - script: |
-      mkdir -p /tmp/openjdk
-      mkdir -p /tmp/java
-      wget -O /tmp/openjdk8.tar.gz "https://buildreqs.blob.core.windows.net/java/macOS/jdk8u.tar.gz"
-      tar -xzf /tmp/openjdk8.tar.gz --strip-components=3 -C /tmp/java
-      if [ "${{ parameters.buildJavaVersion }}" == "jdk8u" ]
-      then
-          wget -O /tmp/openjdk.tar.gz "https://buildreqs.blob.core.windows.net/java/macOS/jdk8u.tar.gz"
-      elif [ "${{ parameters.buildJavaVersion }}" == "jdk11u" ]
-      then
-          wget -O /tmp/openjdk.tar.gz "https://buildreqs.blob.core.windows.net/java/macOS/jdk10u.tar.gz"
-      elif [ "${{ parameters.buildJavaVersion }}" == "jdk" ]
-      then
-          wget -O /tmp/openjdk.tar.gz "https://buildreqs.blob.core.windows.net/java/macOS/jdk13u.tar.gz"
-      fi
-      tar -xzf /tmp/openjdk.tar.gz --strip-components=3 -C /tmp/openjdk
-    displayName: "[Pre build] Download and install adopt openjdk boot jdk"
-
-  # Set environment variables
-  - script: |
-      echo "##vso[task.setvariable variable=JDK_BOOT_DIR]/tmp/openjdk"
-      echo "##vso[task.setvariable variable=JAVA_HOME]/tmp/java"
-      echo "##vso[task.setvariable variable=PATH]/tmp/openjdk/bin;$PATH"
-    displayName: "[Pre build] Set environment variables"
-
   # Run configure to set up the upcoming building process
   - bash: bash configure --with-boot-jdk=$(JDK_BOOT_DIR)
     displayName: "[Build] configure"
@@ -61,6 +22,7 @@ steps:
       tar -zvcf $(Pipeline.Workspace)/build.tar.gz \
           build/*/images/jdk \
           build/*/images/test
+    condition: succeeded()
     displayName: "[Post build] Compress build"
 
   # Publish build binaries as build artifact
@@ -69,7 +31,7 @@ steps:
       targetPath: '$(Pipeline.Workspace)/build.tar.gz'
       artifact: '$(Agent.OS)_$(Agent.OSArchitecture)_build'
       publishLocation: 'pipeline'
-    condition: succeededOrFailed()
+    condition: succeeded()
     displayName: "[Post build] Publish build as artifact" 
 
   

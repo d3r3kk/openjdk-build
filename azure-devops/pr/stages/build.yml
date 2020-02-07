@@ -51,9 +51,11 @@ stages:
         pool:
           vmImage: macOS-10.14
         steps:
-          - template: ../steps/macOS/build.yml
+          - template: ../steps/macOS/pre.yml
             parameters:
+              stage: "build"
               buildJavaVersion: "${{ parameters.buildJavaVersion }}"
+          - template: ../steps/macOS/build.yml
 
   - stage: build_windows_binaries
     variables:
@@ -72,6 +74,8 @@ stages:
         pool:
           vmImage: vs2017-win2016
         steps:
-          - template: ../steps/windows/build.yml
+          - template: ../steps/windows/pre.yml
             parameters:
+              stage: "build"
               buildJavaVersion: "${{ parameters.buildJavaVersion }}"
+          - template: ../steps/windows/build.yml

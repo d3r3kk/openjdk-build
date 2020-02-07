@@ -46,6 +46,7 @@ steps:
               -automatic \
               -xml \
               -vmoption:-Xmx512m \
+              -timeoutFactor:4 \
               -testjdk:build/linux-x86_64-normal-server-release/images/jdk"
       if [ -n "$(NATIVE_PATH)" ]
       then
