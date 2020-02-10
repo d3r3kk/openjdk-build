@@ -35,48 +35,48 @@ class Container:
 
 
 containers = [
-    Container(
-        container="java",
-        base_uri="https://api.adoptopenjdk.net/v2/binary/releases",
-        dependencies=[
-            Dependency(
-                local_path="jdk8u.zip",
-                blob_path="windows/jdk8u.zip",
-                resource_uri="/openjdk8?openjdk_impl=hotspot&os=windows&arch=x64&release=latest&type=jdk",
-                unzip=None
-            ),
-            Dependency(
-                local_path="jdk10u.zip",
-                blob_path="windows/jdk10u.zip",
-                resource_uri="/openjdk10?openjdk_impl=hotspot&os=windows&arch=x64&release=latest&type=jdk",
-                unzip=None
-            ),
-            Dependency(
-                local_path="jdk13u.zip",
-                blob_path="windows/jdk13u.zip",
-                resource_uri="/openjdk13?openjdk_impl=hotspot&os=windows&arch=x64&release=latest&type=jdk",
-                unzip=None
-            ),
-            Dependency(
-                local_path="jdk8u.tar.gz",
-                blob_path="macOS/jdk8u.tar.gz",
-                resource_uri="/openjdk8?openjdk_impl=hotspot&os=mac&arch=x64&release=latest&type=jdk",
-                unzip=None
-            ),
-            Dependency(
-                local_path="jdk10u.tar.gz",
-                blob_path="macOS/jdk10u.tar.gz",
-                resource_uri="/openjdk10?openjdk_impl=hotspot&os=mac&arch=x64&release=latest&type=jdk",
-                unzip=None
-            ),
-            Dependency(
-                local_path="jdk13u.tar.gz",
-                blob_path="macOS/jdk13u.tar.gz",
-                resource_uri="/openjdk13?openjdk_impl=hotspot&os=mac&arch=x64&release=latest&type=jdk",
-                unzip=None
-            ),
-        ],
-    ),
+    # Container(
+    #     container="java",
+    #     base_uri="https://api.adoptopenjdk.net/v2/binary/releases",
+    #     dependencies=[
+    #         Dependency(
+    #             local_path="jdk8u.zip",
+    #             blob_path="windows/jdk8u.zip",
+    #             resource_uri="/openjdk8?openjdk_impl=hotspot&os=windows&arch=x64&release=latest&type=jdk",
+    #             unzip=None
+    #         ),
+    #         Dependency(
+    #             local_path="jdk10u.zip",
+    #             blob_path="windows/jdk10u.zip",
+    #             resource_uri="/openjdk10?openjdk_impl=hotspot&os=windows&arch=x64&release=latest&type=jdk",
+    #             unzip=None
+    #         ),
+    #         Dependency(
+    #             local_path="jdk13u.zip",
+    #             blob_path="windows/jdk13u.zip",
+    #             resource_uri="/openjdk13?openjdk_impl=hotspot&os=windows&arch=x64&release=latest&type=jdk",
+    #             unzip=None
+    #         ),
+    #         Dependency(
+    #             local_path="jdk8u.tar.gz",
+    #             blob_path="macOS/jdk8u.tar.gz",
+    #             resource_uri="/openjdk8?openjdk_impl=hotspot&os=mac&arch=x64&release=latest&type=jdk",
+    #             unzip=None
+    #         ),
+    #         Dependency(
+    #             local_path="jdk10u.tar.gz",
+    #             blob_path="macOS/jdk10u.tar.gz",
+    #             resource_uri="/openjdk10?openjdk_impl=hotspot&os=mac&arch=x64&release=latest&type=jdk",
+    #             unzip=None
+    #         ),
+    #         Dependency(
+    #             local_path="jdk13u.tar.gz",
+    #             blob_path="macOS/jdk13u.tar.gz",
+    #             resource_uri="/openjdk13?openjdk_impl=hotspot&os=mac&arch=x64&release=latest&type=jdk",
+    #             unzip=None
+    #         ),
+    #     ],
+    # ),
     Container(
         container="freetype",
         base_uri="https://download.savannah.gnu.org/releases/freetype",
