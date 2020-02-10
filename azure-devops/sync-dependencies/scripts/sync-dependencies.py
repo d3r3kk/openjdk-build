@@ -198,9 +198,9 @@ containers = [
                 unzip=None
             ),
             Dependency(
-                local_path="asm-7.1.jar",
-                blob_path="asm-7.1.jar",
-                resource_uri="/asm-7.1/asm-7.1.jar",
+                local_path="asm-7.3.jar",
+                blob_path="asm-7.3.jar",
+                resource_uri="/asm-7.3/asm-7.3.jar",
                 unzip=None
             ),
             Dependency(
