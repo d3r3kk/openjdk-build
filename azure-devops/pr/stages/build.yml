@@ -34,3 +34,48 @@ stages:
             parameters:
               buildJavaVersion: "${{ parameters.buildJavaVersion }}"
       
+  - stage: build_macOS_binaries
+    variables:
+      skipComponentGovernanceDetection: true
+    displayName: "Build macOS Binaries"
+    dependsOn: []
+    condition: or(
+        not(variables.BUILD_PLATFORMS),
+        eq(variables.BUILD_PLATFORMS, '*'),
+        contains(variables.BUILD_PLATFORMS, 'macOS')
+      )
+    jobs:
+      - job: build_macOS
+        timeoutInMinutes: 120
+        displayName: "Build macOS"
+        pool:
+          vmImage: macOS-10.14
+        steps:
+          - template: ../steps/macOS/pre.yml
+            parameters:
+              stage: "build"
+              buildJavaVersion: "${{ parameters.buildJavaVersion }}"
+          - template: ../steps/macOS/build.yml
+
+  - stage: build_windows_binaries
+    variables:
+      skipComponentGovernanceDetection: true
+    displayName: "Build Windows Binaries"
+    dependsOn: []
+    condition: or(
+        not(variables.BUILD_PLATFORMS),
+        eq(variables.BUILD_PLATFORMS, '*'),
+        contains(variables.BUILD_PLATFORMS, 'Windows')
+      )
+    jobs:
+      - job: build_macOS
+        timeoutInMinutes: 120
+        displayName: "Build Windows"
+        pool:
+          vmImage: vs2017-win2016
+        steps:
+          - template: ../steps/windows/pre.yml
+            parameters:
+              stage: "build"
+              buildJavaVersion: "${{ parameters.buildJavaVersion }}"
+          - template: ../steps/windows/build.yml

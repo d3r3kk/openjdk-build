@@ -1,0 +1,78 @@
+# 
+# Test macOS template
+#
+# It runs jtreg tests on the jdk previously built,
+# and then uploads the results as artifact
+
+parameters:
+  workspaceDirectory: "/cygdrive/d/a/1"
+
+steps:
+  # Download jtreg 4.2.0
+  - task: UniversalPackages@0
+    inputs:
+      command: 'download'
+      downloadDirectory: '$(Pipeline.Workspace)'
+      feedsToUse: 'internal'
+      vstsFeed: 'c4530ae8-1fc6-48b4-8861-0cfc3363bf84/99bf70fb-4655-4785-8d4e-c2197700c237'
+      vstsFeedPackage: 'b5a5adcc-ae25-4bb9-a55e-fe1cd7d6aa71'
+      vstsPackageVersion: '4.2.0'
+    displayName: "[Pre test] Download jtreg"
+
+  # Extract jtreg
+  - script: bash.exe -c "tar -xvf ${{ parameters.workspaceDirectory }}/jtreg-4.2.0-tip.tar.gz 
+                              -C ${{ parameters.workspaceDirectory }}"
+    displayName: "[Pre test] Extract jtreg"
+
+  # Download build artifact
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      buildType: "current"
+      artifactName: "$(Agent.OS)_$(Agent.OSArchitecture)_build"
+      itemPattern: "**"
+      targetPath: "$(Build.SourcesDirectory)"
+    displayName: "[Pre test] Download build artifact"
+
+  # Extract JDK
+  - script: bash.exe -c "tar -xvf build.tar.gz"
+    displayName: "[Pre test] Extract build"
+
+  # Run tests via jtreg (https://openjdk.java.net/jtreg/index.html)
+  - script: |
+      SET JTREG_BASIC_OPTIONS=-agentvm -verbose:fail,error,summary -ignore:quiet -automatic -xml -vmoption:-Xmx512m -timeoutFactor:4 -testjdk:build/windows-x86_64-normal-server-release/images/jdk
+
+      IF DEFINED NATIVE_PATH (
+        SET JTREG_NATIVE=-nativepath:build/windows-x86_64-normal-server-release/images/test/%NATIVE_PATH%
+      ) ELSE (
+        SET "JTREG_NATIVE= "
+      )
+      IF DEFINED PROBLEM_LIST (
+        SET JTREG_PROBLEM_LIST=-exclude:test/%PROBLEM_LIST%
+      ) ELSE (
+        SET "JTREG_PROBLEM_LIST= "
+      )
+
+      bash.exe -c "java -Xmx512m -jar `cygpath -w ${{ parameters.workspaceDirectory }}/jtreg/lib/jtreg.jar` %JTREG_BASIC_OPTIONS% %JTREG_NATIVE% %JTREG_PROBLEM_LIST% test/%JTREG_TESTS%"
+    displayName: "[Test] $(JTREG_TESTS)"
+
+  # Publish test results to pipeline
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/*.jtr.xml' 
+      searchFolder: '$(Build.SourcesDirectory)/JTwork'
+      mergeTestResults: true
+      failTaskOnFailedTests: false
+      testRunTitle: "$(Agent.OS)_$(Agent.OSArchitecture)_$(TEST_RESULTS_ARTIFACT_NAME)"
+      publishRunAttachments: true
+    displayName: "[Post test] Publish JTwork test results"
+    condition: succeededOrFailed()
+
+  # Publish test report as pipeline artifact
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '$(Build.SourcesDirectory)/JTreport'
+      artifact: '$(Agent.OS)_$(Agent.OSArchitecture)_JTreport_$(TEST_RESULTS_ARTIFACT_NAME)'
+      publishLocation: 'pipeline'
+    condition: succeededOrFailed()
+    displayName: "[Post test] Publish JTreport as artifact"
