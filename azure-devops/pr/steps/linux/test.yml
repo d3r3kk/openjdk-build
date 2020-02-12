@@ -41,6 +41,7 @@ steps:
   # JT_HOME is the path to jtreg 4.2.0 set in the docker image linux_amd64_agent
   # To update JTREG, update the linux_amd64_agent's Dockerfile
   - bash: |
+      IMAGES_PATH=$(echo build/*/images)
       JTREG_BASIC_OPTIONS="-agentvm \
               -verbose:fail,error,summary \
               -ignore:quiet \
@@ -48,10 +49,10 @@ steps:
               -xml \
               -vmoption:-Xmx512m \
               -timeoutFactor:4 \
-              -testjdk:build/linux-x86_64-normal-server-release/images/jdk"
+              -testjdk:$IMAGES_PATH/jdk"
       if [ -n "$NATIVE_PATH" ]
       then
-        JTREG_NATIVE="-nativepath:build/linux-x86_64-normal-server-release/images/test/$NATIVE_PATH"
+        JTREG_NATIVE="-nativepath:$IMAGES_PATH/test/$NATIVE_PATH"
       fi 
       if [ -n "$PROBLEM_LIST" ]
       then

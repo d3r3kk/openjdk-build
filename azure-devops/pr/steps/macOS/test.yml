@@ -35,6 +35,7 @@ steps:
 
   # Run tests via jtreg (https://openjdk.java.net/jtreg/index.html)
   - bash: |
+      IMAGES_PATH=$(echo build/*/images)
       JTREG_BASIC_OPTIONS="-agentvm \
               -verbose:fail,error,summary \
               -ignore:quiet \
@@ -42,10 +43,10 @@ steps:
               -xml \
               -vmoption:-Xmx512m \
               -timeoutFactor:4 \
-              -testjdk:build/macosx-x86_64-normal-server-release/images/jdk"
+              -testjdk:$IMAGES_PATH/jdk"
       if [ -n "$NATIVE_PATH" ]
       then
-        JTREG_NATIVE="-nativepath:build/macosx-x86_64-normal-server-release/images/test/$NATIVE_PATH"
+        JTREG_NATIVE="-nativepath:$IMAGES_PATH/test/$NATIVE_PATH"
       fi 
       if [ -n "$PROBLEM_LIST" ]
       then

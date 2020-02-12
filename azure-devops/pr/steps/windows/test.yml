@@ -40,10 +40,11 @@ steps:
 
   # Run tests via jtreg (https://openjdk.java.net/jtreg/index.html)
   - script: |
-      SET JTREG_BASIC_OPTIONS=-agentvm -verbose:fail,error,summary -ignore:quiet -automatic -xml -vmoption:-Xmx512m -timeoutFactor:4 -testjdk:build/windows-x86_64-normal-server-release/images/jdk
+      FOR /F "tokens=*" %%i IN ('bash.exe -c "echo build/*/images"') do SET IMAGES_PATH=%%i
+      SET JTREG_BASIC_OPTIONS=-agentvm -verbose:fail,error,summary -ignore:quiet -automatic -xml -vmoption:-Xmx512m -timeoutFactor:4 -testjdk:%IMAGES_PATH%/jdk
 
       IF DEFINED NATIVE_PATH (
-        SET JTREG_NATIVE=-nativepath:build/windows-x86_64-normal-server-release/images/test/%NATIVE_PATH%
+        SET JTREG_NATIVE=-nativepath:%IMAGES_PATH%/test/%NATIVE_PATH%
       ) ELSE (
         SET "JTREG_NATIVE= "
       )
