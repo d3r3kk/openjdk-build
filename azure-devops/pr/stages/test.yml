@@ -22,12 +22,9 @@
 parameters:
   linuxContainer: ""
   buildJavaVersion: ""
-  - name: linuxTests
-    default: false
-  - name: macOSTests
-    default: false
-  - name: windowsTests
-    default: false
+  linuxTests: { }
+  macOSTests: { }
+  windowsTests: { }
 
 stages:
   - stage: test_linux_binaries

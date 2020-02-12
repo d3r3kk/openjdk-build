@@ -34,25 +34,27 @@ steps:
     displayName: "[Pre test] Download build artifact"
 
   # Extract JDK
-  - script: bash.exe -c "tar -xvf build.tar.gz"
+  # In case buildJavaVersion is jdk8u 'j2sdk-image' folder name changes to 'jdk'
+  - script: bash.exe -c "tar -xvf build.tar.gz --transform s/j2sdk-image/jdk/"
     displayName: "[Pre test] Extract build"
 
   # Run tests via jtreg (https://openjdk.java.net/jtreg/index.html)
   - script: |
-      SET JTREG_BASIC_OPTIONS=-agentvm -verbose:fail,error,summary -ignore:quiet -automatic -xml -vmoption:-Xmx512m -timeoutFactor:4 -testjdk:build/windows-x86_64-normal-server-release/images/jdk
+      FOR /F "tokens=*" %%i IN ('bash.exe -c "echo build/*/images"') do SET IMAGES_PATH=%%i
+      SET JTREG_BASIC_OPTIONS=-agentvm -verbose:fail,error,summary -ignore:quiet -automatic -xml -vmoption:-Xmx512m -timeoutFactor:4 -testjdk:%IMAGES_PATH%/jdk
 
       IF DEFINED NATIVE_PATH (
-        SET JTREG_NATIVE=-nativepath:build/windows-x86_64-normal-server-release/images/test/%NATIVE_PATH%
+        SET JTREG_NATIVE=-nativepath:%IMAGES_PATH%/test/%NATIVE_PATH%
       ) ELSE (
         SET "JTREG_NATIVE= "
       )
       IF DEFINED PROBLEM_LIST (
-        SET JTREG_PROBLEM_LIST=-exclude:test/%PROBLEM_LIST%
+        SET JTREG_PROBLEM_LIST=-exclude:%PROBLEM_LIST%
       ) ELSE (
         SET "JTREG_PROBLEM_LIST= "
       )
 
-      bash.exe -c "java -Xmx512m -jar `cygpath -w ${{ parameters.workspaceDirectory }}/jtreg/lib/jtreg.jar` %JTREG_BASIC_OPTIONS% %JTREG_NATIVE% %JTREG_PROBLEM_LIST% test/%JTREG_TESTS%"
+      bash.exe -c "java -Xmx512m -jar `cygpath -w ${{ parameters.workspaceDirectory }}/jtreg/lib/jtreg.jar` %JTREG_BASIC_OPTIONS% %JTREG_NATIVE% %JTREG_PROBLEM_LIST% %JTREG_TESTS%"
     displayName: "[Test] $(JTREG_TESTS)"
 
   # Publish test results to pipeline

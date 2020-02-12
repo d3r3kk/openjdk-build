@@ -56,6 +56,8 @@ stages:
               stage: "build"
               buildJavaVersion: "${{ parameters.buildJavaVersion }}"
           - template: ../steps/macOS/build.yml
+            parameters:
+              buildJavaVersion: "${{ parameters.buildJavaVersion }}"
 
   - stage: build_windows_binaries
     variables:
@@ -79,3 +81,5 @@ stages:
               stage: "build"
               buildJavaVersion: "${{ parameters.buildJavaVersion }}"
           - template: ../steps/windows/build.yml
+            parameters:
+              buildJavaVersion: "${{ parameters.buildJavaVersion }}"

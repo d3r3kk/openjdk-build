@@ -35,6 +35,7 @@ steps:
 
   # Run tests via jtreg (https://openjdk.java.net/jtreg/index.html)
   - bash: |
+      IMAGES_PATH=$(echo build/*/images)
       JTREG_BASIC_OPTIONS="-agentvm \
               -verbose:fail,error,summary \
               -ignore:quiet \
@@ -42,21 +43,21 @@ steps:
               -xml \
               -vmoption:-Xmx512m \
               -timeoutFactor:4 \
-              -testjdk:build/macosx-x86_64-normal-server-release/images/jdk"
-      if [ -n "$(NATIVE_PATH)" ]
+              -testjdk:$IMAGES_PATH/jdk"
+      if [ -n "$NATIVE_PATH" ]
       then
-        JTREG_NATIVE="-nativepath:build/macosx-x86_64-normal-server-release/images/test/$(NATIVE_PATH)"
+        JTREG_NATIVE="-nativepath:$IMAGES_PATH/test/$NATIVE_PATH"
       fi 
-      if [ -n "$(PROBLEM_LIST)" ]
+      if [ -n "$PROBLEM_LIST" ]
       then
-        JTREG_PROBLEM_LIST="-exclude:test/$(PROBLEM_LIST)"
+        JTREG_PROBLEM_LIST="-exclude:$PROBLEM_LIST"
       fi
 
       java -Xmx512m -jar $(Pipeline.Workspace)/jtreg/lib/jtreg.jar \
                       $JTREG_BASIC_OPTIONS \
                       $JTREG_NATIVE \
                       $JTREG_PROBLEM_LIST \
-                      test/$(JTREG_TESTS)
+                      $(JTREG_TESTS)
     displayName: "[Test] $(JTREG_TESTS)"
 
   # Publish test results to pipeline
