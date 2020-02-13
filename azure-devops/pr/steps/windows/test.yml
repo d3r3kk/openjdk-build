@@ -38,6 +38,8 @@ steps:
   - script: bash.exe -c "tar -xvf build.tar.gz --transform s/j2sdk-image/jdk/"
     displayName: "[Pre test] Extract build"
 
+  - script: echo %EXCLUDE_TESTS%
+
   # Run tests via jtreg (https://openjdk.java.net/jtreg/index.html)
   - script: |
       FOR /F "tokens=*" %%i IN ('bash.exe -c "echo build/*/images"') do SET IMAGES_PATH=%%i
@@ -48,13 +50,20 @@ steps:
       ) ELSE (
         SET "JTREG_NATIVE= "
       )
-      IF DEFINED PROBLEM_LIST (
-        SET JTREG_PROBLEM_LIST=-exclude:%PROBLEM_LIST%
+      IF DEFINED EXCLUDE_FILE (
+        SET JTREG_EXCLUDE_FILE=-exclude:%EXCLUDE_FILE%
       ) ELSE (
-        SET "JTREG_PROBLEM_LIST= "
+        SET "JTREG_EXCLUDE_FILE= "
+      )
+      IF DEFINED EXCLUDE_TESTS (
+        SET EXCLUDE_TESTS=%EXCLUDE_TESTS%:,= -1 windows-all\n% -1 windows-all\n
+        bash.exe -c "printf '%EXCLUDE_TESTS%' > ExcludeExtraFile.txt"
+        JTREG_EXCLUDE_TESTS_FILE="-exclude:ExcludeExtraFile.txt"
+      ) ELSE (
+        SET "JTREG_EXCLUDE_TESTS_FILE= "
       )
 
-      bash.exe -c "java -Xmx512m -jar `cygpath -w ${{ parameters.workspaceDirectory }}/jtreg/lib/jtreg.jar` %JTREG_BASIC_OPTIONS% %JTREG_NATIVE% %JTREG_PROBLEM_LIST% %JTREG_TESTS%"
+      bash.exe -c "java -Xmx512m -jar `cygpath -w ${{ parameters.workspaceDirectory }}/jtreg/lib/jtreg.jar` %JTREG_BASIC_OPTIONS% %JTREG_NATIVE% %JTREG_EXCLUDE_FILE% %JTREG_EXCLUDE_TESTS_FILE% %JTREG_TESTS%"
     displayName: "[Test] $(JTREG_TESTS)"
 
   # Publish test results to pipeline
