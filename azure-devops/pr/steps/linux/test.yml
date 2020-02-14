@@ -54,15 +54,22 @@ steps:
       then
         JTREG_NATIVE="-nativepath:$IMAGES_PATH/test/$NATIVE_PATH"
       fi 
-      if [ -n "$PROBLEM_LIST" ]
+      if [ -n "$EXCLUDE_FILE" ]
       then
-        JTREG_PROBLEM_LIST="-exclude:$PROBLEM_LIST"
+        JTREG_EXCLUDE_FILE="-exclude:$EXCLUDE_FILE"
       fi
+      if [ -n "$EXCLUDE_TESTS" ]
+      then
+        # Creates a new file to exclude single tests passed in EXCLUDE_TESTS
+        printf "${EXCLUDE_TESTS//,/ -1 linux-all\n} -1 linux-all\n" > ExcludeExtraFile.txt
+        JTREG_EXCLUDE_TESTS_FILE="-exclude:ExcludeExtraFile.txt"
+      fi 
 
       $(JDK_BOOT_DIR)/bin/java -Xmx512m -jar $JT_HOME/lib/jtreg.jar \
                       $JTREG_BASIC_OPTIONS \
                       $JTREG_NATIVE \
-                      $JTREG_PROBLEM_LIST \
+                      $JTREG_EXCLUDE_FILE \
+                      $JTREG_EXCLUDE_TESTS_FILE \
                       $(JTREG_TESTS)
     displayName: "[Test] $(JTREG_TESTS)"
 

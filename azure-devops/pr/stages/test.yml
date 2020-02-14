@@ -17,7 +17,8 @@
 #     JTREG_TESTS Set of tests to run from openjdk
 # Optional:
 #     NATIVE_PATH Path to native libraries
-#     PROBLEM_LIST File with a list of tests to exclude
+#     EXCLUDE_FILE File with a list of tests to exclude
+#     EXCLUDE_TESTS Comma separated list of individual tests to exclude
 
 parameters:
   linuxContainer: ""
