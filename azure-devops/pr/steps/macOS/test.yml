@@ -33,8 +33,6 @@ steps:
   - bash: tar -xvf $(Build.SourcesDirectory)/build.tar.gz
     displayName: "[Pre test] Extract build"
 
-  - bash: printf "$EXCLUDE_TESTS"
-
   # Run tests via jtreg (https://openjdk.java.net/jtreg/index.html)
   - bash: |
       IMAGES_PATH=$(echo build/*/images)

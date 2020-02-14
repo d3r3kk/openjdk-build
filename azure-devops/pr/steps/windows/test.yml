@@ -38,8 +38,6 @@ steps:
   - script: bash.exe -c "tar -xvf build.tar.gz --transform s/j2sdk-image/jdk/"
     displayName: "[Pre test] Extract build"
 
-  - script: echo %EXCLUDE_TESTS%
-
   # Run tests via jtreg (https://openjdk.java.net/jtreg/index.html)
   - script: |
       FOR /F "tokens=*" %%i IN ('bash.exe -c "echo build/*/images"') do SET IMAGES_PATH=%%i
@@ -56,9 +54,9 @@ steps:
         SET "JTREG_EXCLUDE_FILE= "
       )
       IF DEFINED EXCLUDE_TESTS (
-        SET EXCLUDE_TESTS=%EXCLUDE_TESTS%:,= -1 windows-all\n% -1 windows-all\n
+        SET EXCLUDE_TESTS=%EXCLUDE_TESTS:,= -1 windows-all\n% -1 windows-all\n
         bash.exe -c "printf '%EXCLUDE_TESTS%' > ExcludeExtraFile.txt"
-        JTREG_EXCLUDE_TESTS_FILE="-exclude:ExcludeExtraFile.txt"
+        SET JTREG_EXCLUDE_TESTS_FILE=-exclude:ExcludeExtraFile.txt
       ) ELSE (
         SET "JTREG_EXCLUDE_TESTS_FILE= "
       )

@@ -18,7 +18,7 @@
 # Optional:
 #     NATIVE_PATH Path to native libraries
 #     EXCLUDE_FILE File with a list of tests to exclude
-#     EXCLUDE_TESTS Comma separated list of individual tests to exclude
+#     EXCLUDE_TESTS Singe line comma separated list of individual tests to exclude
 
 parameters:
   linuxContainer: ""
