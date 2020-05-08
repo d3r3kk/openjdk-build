@@ -1,0 +1,17 @@
+parameters:
+  linuxContainer: ""
+  buildJavaVersion: ""
+
+stages:
+  - template: ./linux.yml
+    parameters:
+      linuxContainer: ${{ parameters.linuxContainer }}
+      buildJavaVersion: ${{ parameters.buildJavaVersion }}
+
+  - template: ./windows.yml
+    parameters:
+      buildJavaVersion: ${{ parameters.buildJavaVersion }}
+
+  - template: ./macOS.yml
+    parameters:
+      buildJavaVersion: ${{ parameters.buildJavaVersion }}

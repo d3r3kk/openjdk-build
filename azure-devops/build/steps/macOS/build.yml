@@ -1,0 +1,83 @@
+#
+# macOS build template
+#
+# It properly builds the openjdk chosen and the HSDIS object for macOS.
+# The builds previously mentioned are published as artifacts for the 
+# current build pipeline.
+# 
+# Note: The build process is carried out by the AdoptOpenJDK scripts.
+#
+# @param buildJavaVersion Version to build, e.g., "jdk811", "jdk11u", "jdk".
+# @param buildJavaVariant One of the AdoptOpenJDK supported variants.
+# @param alsaUri Alsa URI.
+# @param freetypeUri Free type URI.
+
+parameters:
+  buildJavaVersion: ""
+  buildJavaVariant: "hotspot"
+  buildJavaConfigure: ""
+  alsaUri: "https://buildreqs.blob.core.windows.net/alsa/alsa-lib-1.1.6.tar.bz2"
+  freetypeUri: "https://buildreqs.blob.core.windows.net/freetype/freetype-2.9.1.tar.gz"
+
+steps:
+  # Print environment variables if System.debug is true
+  - bash: |
+      printenv
+    displayName: "macOS Build: show all env vars"
+    condition: eq(variables['system.debug'], 'true')
+
+  # Create build folder and symbolic link to $(Build.SourcesDirectory)
+  - bash: |
+      mkdir -p $(Agent.BuildDirectory)/openjdk-build/workspace/build
+      ln -s $(Build.SourcesDirectory) $(Agent.BuildDirectory)/openjdk-build/workspace/build/src
+    displayName: "Linux Build: create symbolic link"
+
+  # Use the AdoptOpenJDK build scripts to build the OpenJDK binaries
+  - script: |
+      cd $(Agent.BuildDirectory)/openjdk-build
+      CONFIG_ARGS="--with-debug-level=$(BUILD_DEBUG_LEVEL)"
+      case "${{ parameters.buildJavaVersion }}" in
+            "jdk8u")   CONFIG_ARGS="$CONFIG_ARGS";;
+            "jdk11u")  CONFIG_ARGS="$CONFIG_ARGS --disable-warnings-as-errors";;
+            "jdk")     CONFIG_ARGS="$CONFIG_ARGS --disable-warnings-as-errors";;
+      esac
+      ./makejdk-any-platform.sh \
+        --adoptopenjdk-build-repo $(ADOPT_OPENJDK_BUILD_REPO_URI) \
+        -J "${JDK_BOOT_DIR}" \
+        --repository $(JAVA_SOURCE_REPO_URI) \
+        --branch "${JAVA_SOURCE_REPO_BRANCH}" \
+        --disable-shallow-git-clone \
+        --configure-args "${CONFIG_ARGS}" \
+        -d artifacts \
+        --target-file-name $(OPENJDK_OUTPUT_FILE_PREFIX)-macosx-x64.tar.gz \
+        --alsa-tarball-uri ${{ parameters.alsaUri }} \
+        --freetype-tarball-uri ${{ parameters.freetypeUri }} \
+        ${{ parameters.buildJavaConfigure }} \
+        --build-variant ${{ parameters.buildJavaVariant }} \
+        --disable-adopt-branch-safety \
+        ${{ parameters.buildJavaVersion }}
+    displayName: "macOS Build: start makejdk-any-platform process"
+
+  # Upload the produced JDK/JRE binary to the build artifact service.
+  - task: PublishPipelineArtifact@1
+    inputs:
+      artifactName: $(Agent.OS)_$(Agent.OSArchitecture)
+      targetPath: "$(Agent.BuildDirectory)/openjdk-build/workspace/artifacts"
+    displayName: "macOS Build: upload JKD/JRE artifact"
+
+  # Download binutils binaries to build macOS HSDIS object
+  - script: |
+      cd $BUILD_HSDIS_DIR
+      wget https://buildreqs.blob.core.windows.net/binutils/binutils-2.28.tar.gz
+      tar -xzf binutils-2.28.tar.gz
+      make BINUTILS=binutils-2.28 ARCH=amd64
+    displayName: "macOS Build: create hsdis shared object"
+    condition: and(succeeded(), contains(variables.HSDIS_BUILD_PLATFORMS, 'macOS'))
+
+  # Publish macOS HSDIS as build artifact
+  - task: PublishPipelineArtifact@1
+    inputs:
+      artifactName: "$(Agent.OS)_$(Agent.OSArchitecture)_hsdis"
+      targetPath: "$(BUILD_HSDIS_DIR)/build/macosx-amd64/hsdis-amd64.dylib"
+    displayName: "macOS Build: upload hsdis artifact"
+    condition: and(succeeded(), contains(variables.HSDIS_BUILD_PLATFORMS, 'macOS'))

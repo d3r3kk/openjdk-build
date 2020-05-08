@@ -1,0 +1,76 @@
+#
+# Windows build template
+#
+# It properly builds the openjdk chosen and the HSDIS object for Windows.
+# The builds previously mentioned are published as artifacts for the 
+# current build pipeline.
+# 
+# Note: The build process is carried out by the AdoptOpenJDK scripts.
+#
+# @param buildJavaVersion Version to build, e.g., "jdk811", "jdk11u", "jdk".
+# @param buildJavaVariant One of the AdoptOpenJDK supported variants.
+# @param freetypeUri Free type URI.
+# @param freetypeUriJDK8u Free type URI in case buildJavaVersion is "jdku8".
+
+parameters:
+  buildJavaVersion: ""
+  buildJavaVariant: "hotspot"
+  buildJavaConfigure: ""
+  freetypeUri: "https://buildreqs.blob.core.windows.net/freetype/freetype-2.9.1.tar.gz"
+  freetypeUriJDK8u: "https://buildreqs.blob.core.windows.net/freetype/freetype-2.5.3.tar.gz"
+
+steps:
+  # Print environment variables if System.debug is true
+  - bash: |
+      printenv
+    displayName: "Windows Build: show all env vars"
+    condition: eq(variables['system.debug'], 'true')
+
+  # Create build folder and symbolic link to $(Build.SourcesDirectory)
+  - script: |
+      mkdir "$(Agent.BuildDirectory)\openjdk-build\workspace\build"
+      mklink /D "$(Agent.BuildDirectory)\openjdk-build\workspace\build\src" "$(Build.SourcesDirectory)"
+    displayName: "Windows Build: create symbolic link"
+
+  # Use the AdoptOpenJDK build scripts to build the OpenJDK binaries
+  - script: |
+      cd $(Agent.BuildDirectory)\openjdk-build
+      IF "${{ parameters.buildJavaVersion }}"=="jdk8u" (
+        set TOOLCHAIN_VERSION=2010
+        set EXTRA_CONFIGURE_ARGS=
+        set EXTRA_OPTION=--freetype-tarball-uri ${{ parameters.freetypeUriJDK8u }}
+      )
+      IF "${{ parameters.buildJavaVersion }}"=="jdk11u" (
+        set TOOLCHAIN_VERSION=2017
+        set EXTRA_CONFIGURE_ARGS=--disable-warnings-as-errors
+        set EXTRA_OPTION=--jvm-variant client,server --freetype-tarball-uri ${{ parameters.freetypeUri }}
+      )
+      IF "${{ parameters.buildJavaVersion }}"=="jdk" (
+        set TOOLCHAIN_VERSION=2017
+        set EXTRA_CONFIGURE_ARGS=--disable-warnings-as-errors
+        set EXTRA_OPTION=--jvm-variant client,server --freetype-tarball-uri ${{ parameters.freetypeUri }}
+      )
+      bash.exe -c "./makejdk-any-platform.sh --adoptopenjdk-build-repo $(ADOPT_OPENJDK_BUILD_REPO_URI) -J %JDK_BOOT_DIR% --repository $(JAVA_SOURCE_REPO_URI) --branch %JAVA_SOURCE_REPO_BRANCH% --disable-shallow-git-clone --configure-args '%EXTRA_CONFIGURE_ARGS% --with-debug-level=$(BUILD_DEBUG_LEVEL) --with-toolchain-version=%TOOLCHAIN_VERSION%' -d artifacts --target-file-name %OPENJDK_OUTPUT_FILE_PREFIX%-windows-x64.zip ${{ parameters.buildJavaConfigure }} --build-variant ${{ parameters.buildJavaVariant }} --disable-adopt-branch-safety %EXTRA_OPTION% ${{ parameters.buildJavaVersion }}"
+    displayName: "Windows Build: start makejdk-any-platform process"
+
+  # Upload the produced JDK/JRE binary to the build artifact service.
+  - task: PublishPipelineArtifact@1
+    inputs:
+      artifactName: $(Agent.OS)_$(Agent.OSArchitecture)
+      targetPath: "$(Agent.BuildDirectory)/openjdk-build/workspace/artifacts"
+    displayName: "Windows Build: update JKD/JRE artifact"
+
+  # Download binutils binaries to build Windows HSDIS object
+  - script: |
+      cd %BUILD_HSDIS_DIR%
+      bash.exe -c "wget https://buildreqs.blob.core.windows.net/binutils/binutils-2.28.1.tar.xz && tar xvf binutils-2.28.1.tar.xz && make OS=Linux MINGW=x86_64-w64-mingw32 BINUTILS=binutils-2.28.1"
+    displayName: "Windows Build: create hsdis shared object"
+    condition: and(succeeded(), contains(variables.HSDIS_BUILD_PLATFORMS, 'Windows'))
+
+  # Publish Windows HSDIS as build artifact
+  - task: PublishPipelineArtifact@1
+    inputs:
+      artifactName: "$(Agent.OS)_$(Agent.OSArchitecture)_hsdis"
+      targetPath: "$(BUILD_HSDIS_DIR)/build/Linux-amd64/hsdis-amd64.dll"
+    displayName: "Windows Build: upload hsdis artifact"
+    condition: and(succeeded(), contains(variables.HSDIS_BUILD_PLATFORMS, 'Windows'))

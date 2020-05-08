@@ -118,7 +118,7 @@ checkoutAndCloneOpenJDKGitRepo()
 # Set the git clone arguments
 setGitCloneArguments() {
   cd "${BUILD_CONFIG[WORKSPACE_DIR]}"
-  local git_remote_repo_address="${BUILD_CONFIG[REPOSITORY]}.git"
+  local git_remote_repo_address="${BUILD_CONFIG[REPOSITORY]}"
 
   GIT_CLONE_ARGUMENTS=(${BUILD_CONFIG[SHALLOW_CLONE_OPTION]} "$git_remote_repo_address" "${BUILD_CONFIG[WORKSPACE_DIR]}/${BUILD_CONFIG[WORKING_DIR]}/${BUILD_CONFIG[OPENJDK_SOURCE_DIR]}")
 }
@@ -164,15 +164,19 @@ checkingAndDownloadingAlsa()
   then
     echo "Skipping ALSA download"
   else
-    downloadFile "alsa-lib.tar.bz2" "https://ftp.osuosl.org/pub/blfs/conglomeration/alsa-lib/alsa-lib-${ALSA_LIB_VERSION}.tar.bz2" ${ALSA_LIB_CHECKSUM}
+    local alsaTar="alsa-lib.tar";
+    local alsaTarBz="${alsaTar}.bz2";
 
+    echo "Downloading Alsa tarball from ${BUILD_CONFIG[ALSA_TARBALL_URI]}" ${ALSA_LIB_CHECKSUM}
+
+    downloadFile "${alsaTarBz}" "${BUILD_CONFIG[ALSA_TARBALL_URI]}"
     if [[ "${BUILD_CONFIG[OS_KERNEL_NAME]}" == "aix" ]] || [[ "${BUILD_CONFIG[OS_KERNEL_NAME]}" == "sunos" ]]; then
-      bzip2 -d alsa-lib.tar.bz2
-      tar -xf alsa-lib.tar --strip-components=1 -C "${BUILD_CONFIG[WORKSPACE_DIR]}/${BUILD_CONFIG[WORKING_DIR]}/installedalsa/"
-      rm alsa-lib.tar
+      bzip2 -d "${alsaTarBz}"
+      tar -xf "${alsaTar}" --strip-components=1 -C "${BUILD_CONFIG[WORKSPACE_DIR]}/${BUILD_CONFIG[WORKING_DIR]}/installedalsa/"
+      rm "${alsaTar}"
     else
-      tar -xf alsa-lib.tar.bz2 --strip-components=1 -C "${BUILD_CONFIG[WORKSPACE_DIR]}/${BUILD_CONFIG[WORKING_DIR]}/installedalsa/"
-      rm alsa-lib.tar.bz2
+      tar -xf "${alsaTarBz}" --strip-components=1 -C "${BUILD_CONFIG[WORKSPACE_DIR]}/${BUILD_CONFIG[WORKING_DIR]}/installedalsa/"
+      rm "${alsaTarBz}"
     fi
   fi
 }
@@ -299,8 +303,8 @@ checkingAndDownloadingFreeType()
   if [[ ! -z "$FOUND_FREETYPE" ]] ; then
     echo "Skipping FreeType download"
   else
-    downloadFile "freetype.tar.gz" "https://download.savannah.gnu.org/releases/freetype/freetype-${BUILD_CONFIG[FREETYPE_FONT_VERSION]}.tar.gz"
-    downloadFile "freetype.tar.gz.sig" "https://download.savannah.gnu.org/releases/freetype/freetype-${BUILD_CONFIG[FREETYPE_FONT_VERSION]}.tar.gz.sig"
+    downloadFile "freetype.tar.gz" ${BUILD_CONFIG[FREETYPE_TARBALL_URI]}
+    downloadFile "freetype.tar.gz.sig" "${BUILD_CONFIG[FREETYPE_TARBALL_URI]}.sig"
     checkFingerprint "freetype.tar.gz.sig" "freetype.tar.gz" "freetype" "58E0 C111 E39F 5408 C5D3 EC76 C1A6 0EAC E707 FDA5" "${FREETYPE_LIB_CHECKSUM}"
 
     rm -rf "./freetype" || true
@@ -396,10 +400,10 @@ checkingAndDownloadCaCerts()
   elif [ "${BUILD_CONFIG[USE_JEP319_CERTS]}" != "true" ];
   then
     git init
-    git remote add origin -f https://github.com/AdoptOpenJDK/openjdk-build.git
+    git remote add origin -f "${BUILD_CONFIG[ADOPTOPENJDK_BUILD_REPO]}"
     git config core.sparsecheckout true
     echo "security/*" >> .git/info/sparse-checkout
-    git pull origin master
+    git pull origin juniper
   fi
 
   cd "${BUILD_CONFIG[WORKSPACE_DIR]}/${BUILD_CONFIG[WORKING_DIR]}" || exit

@@ -1,0 +1,184 @@
+parameters:
+  buildJavaVersion: ""
+
+stages:
+  - stage: macOS_ci_extended_system
+    variables:
+      skipComponentGovernanceDetection: true
+      BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
+    displayName: "macOS CI: extended.system"
+    condition: and(
+      or(
+      not(variables.TEST_PLATFORMS_AND_STAGES),
+      contains(variables.TEST_PLATFORMS_AND_STAGES, 'macOS.ci')
+      ),
+      succeeded('build_macOS_binaries')
+      )
+    dependsOn: build_macOS_binaries
+
+    jobs:
+      - job: extended_system
+        timeoutInMinutes: 720
+        displayName: "extended.system"
+        pool:
+          vmImage: macOS-latest
+        variables:
+          BUILD_LIST: "system"
+          TEST_TARGET: "_extended.system"
+        steps:
+          - template: ../steps/shared/pre_test.yml
+          - template: ../steps/shared/unix_systemtest_dependencies.yml
+          - template: ../steps/macOS/pre_test.yml
+          - template: ../steps/macOS/test.yml
+          - template: ../steps/shared/post_test.yml
+            parameters:
+              testFailTaskOnFailedTests: true
+              testTestResultsFiles: "**/*.tap.xml"
+
+  - stage: macOS_pr_sanity_openjdk
+    variables:
+      skipComponentGovernanceDetection: true
+      BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
+    displayName: "macOS PR: sanity.openjdk"
+    condition: and(
+      or(
+      not(variables.TEST_PLATFORMS_AND_STAGES),
+      contains(variables.TEST_PLATFORMS_AND_STAGES, 'macOS.pr')
+      ),
+      succeeded('build_macOS_binaries')
+      )
+    dependsOn: build_macOS_binaries
+
+    jobs:
+      - job: sanity_openjdk
+        timeoutInMinutes: 120
+        displayName: "sanity.openjdk"
+        pool:
+          vmImage: macOS-latest
+        variables:
+          BUILD_LIST: "openjdk"
+          TEST_TARGET: "_individual.openjdk"
+        strategy:
+          matrix:
+            jdk_io_math_jre:
+              CUSTOMIZED_TESTS: "openjdk:jdk_io|openjdk:jdk_math|openjdk:jdk_math_jre"
+            jdk_net:
+              CUSTOMIZED_TESTS: "openjdk:jdk_net"
+            jdk_security1:
+              CUSTOMIZED_TESTS: "openjdk:jdk_security1"
+            jdk_lang:
+              CUSTOMIZED_TESTS: "openjdk:jdk_lang"
+            jdk_nio:
+              CUSTOMIZED_TESTS: "openjdk:jdk_nio"
+            jdk_rmi:
+              CUSTOMIZED_TESTS: "openjdk:jdk_rmi"
+            jdk_util:
+              CUSTOMIZED_TESTS: "openjdk:jdk_util"
+        steps:
+          - template: ../steps/shared/pre_test.yml
+          - template: ../steps/macOS/pre_test.yml
+          - template: ../steps/macOS/test.yml
+          - template: ../steps/shared/post_test.yml
+            parameters:
+              testFailTaskOnFailedTests: true
+              testTestResultsFiles: "**/*.jtr.xml"
+
+  - stage: macOS_pr_sanity_system
+    variables:
+      skipComponentGovernanceDetection: true
+      BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
+    displayName: "macOS PR: sanity.system"
+    condition: and(
+      or(
+      not(variables.TEST_PLATFORMS_AND_STAGES),
+      contains(variables.TEST_PLATFORMS_AND_STAGES, 'macOS.pr')
+      ),
+      succeeded('build_macOS_binaries')
+      )
+    dependsOn: build_macOS_binaries
+
+    jobs:
+      - job: sanity_system
+        timeoutInMinutes: 120
+        displayName: "sanity.system"
+        pool:
+          vmImage: macOS-latest
+        variables:
+          BUILD_LIST: "system"
+          TEST_TARGET: "_sanity.system"
+        steps:
+          - template: ../steps/shared/pre_test.yml
+          - template: ../steps/shared/unix_systemtest_dependencies.yml
+          - template: ../steps/macOS/pre_test.yml
+          - template: ../steps/macOS/test.yml
+          - template: ../steps/shared/post_test.yml
+            parameters:
+              testFailTaskOnFailedTests: true
+              testTestResultsFiles: "**/*.tap.xml"
+
+  - ${{ if eq(parameters.buildJavaVersion, 'jdk11u') }}:
+      - stage: macOS_pr_sanity_perf
+        variables:
+          skipComponentGovernanceDetection: true
+          BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
+        displayName: "macOS PR: sanity.perf"
+        condition: and(
+          or(
+          not(variables.TEST_PLATFORMS_AND_STAGES),
+          contains(variables.TEST_PLATFORMS_AND_STAGES, 'macOS.pr')
+          ),
+          succeeded('build_macOS_binaries')
+          )
+        dependsOn: build_macOS_binaries
+
+        jobs:
+          - job: sanity_perf
+            timeoutInMinutes: 120
+            displayName: "sanity.perf"
+            pool:
+              vmImage: macOS-latest
+            variables:
+              BUILD_LIST: "perf"
+              TEST_TARGET: "_sanity.perf"
+            steps:
+              - template: ../steps/shared/pre_test.yml
+              - template: ../steps/shared/perftest_dependencies.yml
+              - template: ../steps/macOS/pre_test.yml
+              - template: ../steps/macOS/test.yml
+              - template: ../steps/shared/post_test.yml
+                parameters:
+                  testFailTaskOnFailedTests: true
+                  testTestResultsFiles: "**/*.tap.xml"
+
+  - ${{ if eq(parameters.buildJavaVersion, '8u') }}:
+      - stage: macOS_nightly_special_openjdk
+        variables:
+          skipComponentGovernanceDetection: true
+          BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
+        displayName: "macOS Nightly: special.openjdk"
+        condition: and(
+          or(
+          not(variables.TEST_PLATFORMS_AND_STAGES),
+          contains(variables.TEST_PLATFORMS_AND_STAGES, 'macOS.nightly')
+          ),
+          succeeded('build_macOS_binaries')
+          )
+        dependsOn: build_macOS_binaries
+
+        jobs:
+          - job: special_openjdk
+            timeoutInMinutes: 120
+            displayName: "speical.openjdk"
+            pool:
+              vmImage: macOS-latest
+            variables:
+              BUILD_LIST: "openjdk"
+              TEST_TARGET: "_special.openjdk"
+            steps:
+              - template: ../steps/shared/pre_test.yml
+              - template: ../steps/macOS/pre_test.yml
+              - template: ../steps/macOS/test.yml
+              - template: ../steps/shared/post_test.yml
+                parameters:
+                  testFailTaskOnFailedTests: true
+                  testTestResultsFiles: "**/*.tap.xml"

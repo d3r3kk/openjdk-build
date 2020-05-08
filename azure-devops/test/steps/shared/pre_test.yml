@@ -1,0 +1,82 @@
+steps:
+  - bash: |
+      echo "##vso[task.setvariable variable=HOME]$(Agent.BuildDirectory)"
+    displayName: "Pre Test: git set HOME env"
+
+  - bash: |
+      git config --global core.autocrlf input
+    displayName: "Pre Test: git set crlf option"
+
+  - bash: |
+      ERR_MESSAGE_MISSING_ENV=''
+
+      if [ -z "$BUILD_LIST" ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set TEST_BUILD_LIST. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ -z "$BUILD_JAVA_VERSION" ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set BUILD_JAVA_VERSION. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ -z "$TEST_TARGET" ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set TEST_TARGET. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ -z $(ADOPT_OPENJDK_TEST_REPO_URI) ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set ADOPT_OPENJDK_TEST_REPO_URI to URI of the openjdk-tests repo to use. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ -z $(ADOPT_OPENJDK_TEST_REPO_BRANCH) ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set ADOPT_OPENJDK_TEST_REPO_BRANCH to the branch-name of the openjdk-tests repo to use. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ -z $(OPENJ9_REPO_URI) ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set OPENJ9_REPO_URI to URI of the openj9 repo to use. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ -z $(OPENJ9_REPO_BRANCH) ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set OPENJ9_REPO_BRANCH to the branch-name of the openj9 repo to use. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ -z $(TKG_REPO_URI) ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set TKG_REPO_URI to URI of the openj9 repo to use. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ -z $(TKG_REPO_BRANCH) ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set TKG_REPO_BRANCH to the branch-name of the openj9 repo to use. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ ! -z "$ERR_MESSAGE_MISSING_ENV" ]; then
+        echo "##vso[task.logissue type=error;]$ERR_MESSAGE_MISSING_ENV"
+        echo "##vso[task.complete result=Failed;]"
+      fi;
+    displayName: "Pre Test: check required environment variables"
+
+  - checkout: self
+    fetchDepth: 1
+
+  # Set the git authorization header for subsequent git pull/clone operations...
+  # <This step is unnecessary on your local workstation, can be approximated by using SSH URIs>
+  - bash: |
+      git config --global --add http.https://dev.azure.com.extraheader "AUTHORIZATION: bearer $(System.AccessToken)"
+    displayName: "Pre Test: git set auth header"
+
+  # download JDK/JRE artifact
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      buildType: "current"
+      artifactName: $(Agent.OS)_$(Agent.OSArchitecture)
+      itemPattern: "**"
+      targetPath: "$(Pipeline.Workspace)"
+    displayName: "Pre Test: download JDK/JRE artifact"
+
+  # clone openjdk-tests repo
+  - bash: |
+      cd $COMMON_TESTRESULTSDIRECTORY
+      git clone -b $(ADOPT_OPENJDK_TEST_REPO_BRANCH) --depth 1 $(ADOPT_OPENJDK_TEST_REPO_URI) openjdk-tests
+    displayName: "Pre Test: git clone openjdk-tests repo"
+
+  - bash: |
+      printenv
+    displayName: "Pre Test: show all env vars"
+    condition: eq(variables['system.debug'], 'true')

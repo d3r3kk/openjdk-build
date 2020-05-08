@@ -1,0 +1,24 @@
+steps:
+  # create symbolic link, map openjdk source to the test framework folder
+  - script: |
+      cd %TEST_DIR%
+      mklink /D "./openjdk/openjdk-jdk" "%OPENJDK_SOURCES%"
+    displayName: "Windows Test: create symbolic link"
+
+  # Get openj9 test framework
+  - script: |
+      cd %TEST_DIR%
+      bash.exe -c "./get.sh --openj9_repo $(OPENJ9_REPO_URI) --openj9_branch $(OPENJ9_REPO_BRANCH) --tkg_repo $(TKG_REPO_URI) --tkg_branch $(TKG_REPO_BRANCH) -t %TEST_DIR%"
+    displayName: "Windows Test: get openj9 test framework"
+
+  # Build test suites
+  - script: |
+      cd %TEST_DIR%
+      bash.exe -c "./maketest.sh %TEST_DIR%"
+    displayName: "Windows Test: build test suites"
+
+  # Run test suites
+  - script: |
+      cd %TEST_DIR%
+      bash.exe -c "OPENJDK_DIR=%OPENJDK_SOURCES% ./maketest.sh %TEST_DIR% %TEST_TARGET%"
+    displayName: "Windows Test: execute test suites"

@@ -51,6 +51,17 @@ Build Project Amber, defaults to https://github.com/AdoptOpenJDK/openjdk-amber
 
 .SH OPTIONS
 .TP
+.BR \-\-alsa-version " " \fI<version>\fR
+specify the version of Alsa to download.
+.TP
+.BR \-\-alsa-tarball-uri " " \fI<uri>\fB
+specify an alternate download location to the alsa tarball.
+Must be in tar.bz2 format. Note this causes the --alsa-version
+to be ignored.
+.TP
+.BR \-\-adoptopenjdk-build-repo " " \fI<uri>\fR
+specify the uri of AdoptOpenJDK/openjdk-build repo.
+.TP
 .BR \-b ", " \-\-branch " " \fI<branch>\fR
 specify a custom branch to build from, e.g. dev.
 For reference, AdoptOpenJDK GitHub source repos default to the \fI<dev>\fR

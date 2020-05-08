@@ -31,6 +31,9 @@
 # (because of GPL3), we therefore have to name the indexes of the CONFIG_PARAMS
 # map. This is why we can't have nice things.
 CONFIG_PARAMS=(
+ALSA_LIB_VERSION
+ALSA_TARBALL_URI
+ADOPTOPENJDK_BUILD_REPO
 ADOPT_PATCHES
 BRANCH
 BUILD_FULL_NAME
@@ -54,6 +57,7 @@ FREETYPE
 FREETYPE_DIRECTORY
 FREETYPE_FONT_BUILD_TYPE_PARAM
 FREETYPE_FONT_VERSION
+FREETYPE_TARBALL_URI
 KEEP_CONTAINER
 JDK_BOOT_DIR
 JDK_PATH
@@ -174,6 +178,15 @@ function parseConfigurationArguments() {
       case "$opt" in
         "--" ) break 2;;
 
+        "--alsa-version" )
+        BUILD_CONFIG[ALSA_LIB_VERSION]="$1"; shift;;
+
+        "--alsa-tarball-uri" )
+        BUILD_CONFIG[ALSA_TARBALL_URI]="$1"; shift;;
+
+        "--adoptopenjdk-build-repo" )
+        BUILD_CONFIG[ADOPTOPENJDK_BUILD_REPO]="$1"; shift;;
+
         "--build-variant" )
         BUILD_CONFIG[BUILD_VARIANT]="$1"; shift;;
 
@@ -221,6 +234,9 @@ function parseConfigurationArguments() {
 
         "--freetype-build-param" )
         BUILD_CONFIG[FREETYPE_FONT_BUILD_TYPE_PARAM]="$1"; shift;;
+
+        "--freetype-tarball-uri" )
+        BUILD_CONFIG[FREETYPE_TARBALL_URI]="$1"; shift;;
 
         "--freetype-version" )
         BUILD_CONFIG[FREETYPE_FONT_VERSION]="$1"; shift;;
@@ -338,11 +354,19 @@ function configDefaults() {
   # The OpenJDK source code repository to build from, e.g. an AdoptOpenJDK repo
   BUILD_CONFIG[REPOSITORY]=""
 
+  # The default AdoptOpenJDK/openjdk-build repo link
+  BUILD_CONFIG[ADOPTOPENJDK_BUILD_REPO]="https://github.com/AdoptOpenJDK/openjdk-build"
+
+  # Dependency information
+  BUILD_CONFIG[ALSA_LIB_VERSION]="1.1.6"
+  BUILD_CONFIG[ALSA_TARBALL_URI]="https://ftp.osuosl.org/pub/blfs/conglomeration/alsa-lib/alsa-lib-${BUILD_CONFIG[ALSA_LIB_VERSION]}.tar.bz2"
+
   BUILD_CONFIG[COPY_MACOSX_FREE_FONT_LIB_FOR_JDK_FLAG]="false"
   BUILD_CONFIG[COPY_MACOSX_FREE_FONT_LIB_FOR_JRE_FLAG]="false"
   BUILD_CONFIG[FREETYPE]=true
   BUILD_CONFIG[FREETYPE_DIRECTORY]=""
   BUILD_CONFIG[FREETYPE_FONT_VERSION]="2.9.1"
+  BUILD_CONFIG[FREETYPE_TARBALL_URI]="https://download.savannah.gnu.org/releases/freetype/freetype-${BUILD_CONFIG[FREETYPE_FONT_VERSION]}.tar.gz"
   BUILD_CONFIG[FREETYPE_FONT_BUILD_TYPE_PARAM]=""
 
   case "${BUILD_CONFIG[OS_KERNEL_NAME]}" in

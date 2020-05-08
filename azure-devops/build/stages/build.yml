@@ -1,0 +1,94 @@
+parameters:
+  linuxContainer: ""
+  linuxBootJDKUri: ""
+  macOSBootJDKUri: ""
+  windowsBootJDKUri: ""
+  buildJavaVersion: ""
+  buildJavaVariant: "hotspot"
+  buildJavaConfigure: ""
+
+stages:
+  - stage: build_linux_binaries
+    variables:
+      skipComponentGovernanceDetection: true
+    displayName: "Build Linux Binaries"
+    dependsOn: []
+    condition: or(
+        not(variables.BUILD_PLATFORMS),
+        eq(variables.BUILD_PLATFORMS, '*'),
+        contains(variables.BUILD_PLATFORMS, 'Linux')
+      )
+    jobs:
+      - job: build_linux
+        timeoutInMinutes: 120
+        displayName: "Build Linux"
+        pool:
+          vmImage: ubuntu-16.04
+        container: ${{ parameters.linuxContainer }}
+        steps:
+          - template: ../steps/linux/pre_build.yml
+            parameters:
+              buildJavaVersion: ${{ parameters.buildJavaVersion }}
+              linuxBootJDKUri: ${{ parameters.linuxBootJDKUri }}
+          - template: ../steps/linux/build.yml
+            parameters:
+              buildJavaVersion: ${{ parameters.buildJavaVersion }}
+              buildJavaVariant: ${{ parameters.buildJavaVariant }}
+              buildJavaConfigure: ${{ parameters.buildJavaConfigure }}
+          - template: ../steps/post_build.yml
+
+  - stage: build_macOS_binaries
+    variables:
+      skipComponentGovernanceDetection: true
+    displayName: "Build macOS Binaries"
+    dependsOn: []
+    condition: or(
+        not(variables.BUILD_PLATFORMS),
+        eq(variables.BUILD_PLATFORMS, '*'),
+        contains(variables.BUILD_PLATFORMS, 'macOS')
+      )
+    jobs:
+      - job: build_macOS
+        timeoutInMinutes: 120
+        displayName: "Build macOS"
+        pool:
+          vmImage: macOS-10.14
+        steps:
+          - template: ../steps/macOS/pre_build.yml
+            parameters:
+              buildJavaVersion: ${{ parameters.buildJavaVersion }}
+              macOSBootJDKUri: ${{ parameters.macOSBootJDKUri }}
+          - template: ../steps/macOS/build.yml
+            parameters:
+              buildJavaVersion: ${{ parameters.buildJavaVersion }}
+              buildJavaVariant: ${{ parameters.buildJavaVariant }}
+              buildJavaConfigure: ${{ parameters.buildJavaConfigure }}
+          - template: ../steps/post_build.yml
+
+  - stage: build_windows_binaries
+    variables:
+      skipComponentGovernanceDetection: true
+    displayName: "Build Windows Binaries"
+    dependsOn: []
+    condition: or(
+        not(variables.BUILD_PLATFORMS),
+        eq(variables.BUILD_PLATFORMS, '*'),
+        contains(variables.BUILD_PLATFORMS, 'Windows')
+      )
+    jobs:
+      - job: build_macOS
+        timeoutInMinutes: 120
+        displayName: "Build Windows"
+        pool:
+          vmImage: vs2017-win2016
+        steps:
+          - template: ../steps/windows/pre_build.yml
+            parameters:
+              buildJavaVersion: ${{ parameters.buildJavaVersion }}
+              windowsBootJDKUri: ${{ parameters.windowsBootJDKUri }}
+          - template: ../steps/windows/build.yml
+            parameters:
+              buildJavaVersion: ${{ parameters.buildJavaVersion }}
+              buildJavaVariant: ${{ parameters.buildJavaVariant }}
+              buildJavaConfigure: ${{ parameters.buildJavaConfigure }}
+          - template: ../steps/post_build.yml

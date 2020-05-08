@@ -1,0 +1,91 @@
+# 
+# Test macOS template
+#
+# It runs jtreg tests on the jdk previously built,
+# and then uploads the results as artifact
+
+steps:
+  # Download jtreg 4.2.0
+  - task: UniversalPackages@0
+    inputs:
+      command: 'download'
+      downloadDirectory: '$(Pipeline.Workspace)'
+      feedsToUse: 'internal'
+      vstsFeed: 'c4530ae8-1fc6-48b4-8861-0cfc3363bf84/99bf70fb-4655-4785-8d4e-c2197700c237'
+      vstsFeedPackage: 'b5a5adcc-ae25-4bb9-a55e-fe1cd7d6aa71'
+      vstsPackageVersion: '4.2.0'
+    displayName: "[Pre test] Download jtreg"
+
+  # Extract jtreg
+  - bash: tar -xvf $(Pipeline.Workspace)/jtreg-4.2.0-tip.tar.gz -C $(Pipeline.Workspace)
+    displayName: "[Pre test] Extract jtreg"
+
+  # Download build artifact
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      buildType: "current"
+      artifactName: "$(Agent.OS)_$(Agent.OSArchitecture)_build"
+      itemPattern: "**"
+      targetPath: "$(Build.SourcesDirectory)"
+    displayName: "[Pre test] Download build artifact"
+
+  # Extract JDK
+  - bash: tar -xvf $(Build.SourcesDirectory)/build.tar.gz
+    displayName: "[Pre test] Extract build"
+
+  # Run tests via jtreg (https://openjdk.java.net/jtreg/index.html)
+  - bash: |
+      IMAGES_PATH=$(echo build/*/images)
+      JTREG_BASIC_OPTIONS="-agentvm \
+              -verbose:fail,error,summary \
+              -ignore:quiet \
+              -automatic \
+              -xml \
+              -vmoption:-Xmx512m \
+              -timeoutFactor:4 \
+              -testjdk:$IMAGES_PATH/jdk"
+      if [ -n "$NATIVE_PATH" ]
+      then
+        JTREG_NATIVE="-nativepath:$IMAGES_PATH/test/$NATIVE_PATH"
+      fi 
+      if [ -n "$EXCLUDE_FILE" ]
+      then
+        JTREG_EXCLUDE_FILE="-exclude:$EXCLUDE_FILE"
+      fi
+
+      if [ -n "$EXCLUDE_TESTS" ]
+      then
+        # Creates a new file to exclude single tests passed in EXCLUDE_TESTS
+        printf "${EXCLUDE_TESTS//,/ -1 macosx-all\n} -1 macosx-all\n" > ExcludeExtraFile.txt
+        JTREG_EXCLUDE_TESTS_FILE="-exclude:ExcludeExtraFile.txt"
+      fi 
+      
+      java -Xmx512m -jar $(Pipeline.Workspace)/jtreg/lib/jtreg.jar \
+                      $JTREG_BASIC_OPTIONS \
+                      $JTREG_NATIVE \
+                      $JTREG_EXCLUDE_FILE \
+                      $JTREG_EXCLUDE_TESTS_FILE \
+                      $(JTREG_TESTS)
+    displayName: "[Test] $(JTREG_TESTS)"
+
+  # Publish test results to pipeline
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/*.jtr.xml' 
+      searchFolder: '$(Build.SourcesDirectory)/JTwork'
+      mergeTestResults: true
+      failTaskOnFailedTests: false
+      testRunTitle: "$(Agent.OS)_$(Agent.OSArchitecture)_$(TEST_RESULTS_ARTIFACT_NAME)"
+      publishRunAttachments: true
+    displayName: "[Post test] Publish JTwork test results"
+    condition: succeededOrFailed()
+
+  # Publish test report as pipeline artifact
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '$(Build.SourcesDirectory)/JTreport'
+      artifact: '$(Agent.OS)_$(Agent.OSArchitecture)_JTreport_$(TEST_RESULTS_ARTIFACT_NAME)'
+      publishLocation: 'pipeline'
+    condition: succeededOrFailed()
+    displayName: "[Post test] Publish JTreport as artifact"

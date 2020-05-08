@@ -1,0 +1,23 @@
+steps:
+  - bash: |
+      DIR_PREFIX=$(Common.TestResultsDirectory)/openjdk-tests/systemtest_prereqs
+      URI_PREFIX=https://buildreqs.blob.core.windows.net/systemtest
+      mkdir -p ${DIR_PREFIX}
+      mkdir -p ${DIR_PREFIX}/apache-ant-1.10.2/lib
+      mkdir -p ${DIR_PREFIX}/asm-7.1
+      mkdir -p ${DIR_PREFIX}/cvsclient
+      mkdir -p ${DIR_PREFIX}/junit-4.12
+      mkdir -p ${DIR_PREFIX}/log4j-2.3
+      mkdir -p ${DIR_PREFIX}/mauve
+      mkdir -p ${DIR_PREFIX}/tools
+      wget -O ${DIR_PREFIX}/apache-ant-1.10.2/lib/ant-launcher.jar ${URI_PREFIX}/ant-launcher.jar
+      wget -O ${DIR_PREFIX}/asm-7.1/asm-7.1.jar ${URI_PREFIX}/asm-7.1.jar
+      wget -O ${DIR_PREFIX}/cvsclient/org-netbeans-lib-cvsclient.jar ${URI_PREFIX}/org-netbeans-lib-cvsclient.jar
+      wget -O ${DIR_PREFIX}/junit-4.12/hamcrest-core-1.3.jar ${URI_PREFIX}/hamcrest-core-1.3.jar
+      wget -O ${DIR_PREFIX}/junit-4.12/junit-4.12.jar ${URI_PREFIX}/junit-4.12.jar
+      wget -O ${DIR_PREFIX}/log4j-2.3/log4j-api-2.3.jar ${URI_PREFIX}/log4j-api-2.3.jar
+      wget -O ${DIR_PREFIX}/log4j-2.3/log4j-core-2.3.jar ${URI_PREFIX}/log4j-core-2.3.jar
+      wget -O ${DIR_PREFIX}/mauve/mauve.jar ${URI_PREFIX}/mauve.jar
+      wget -O ${DIR_PREFIX}/tools/tools.jar ${URI_PREFIX}/tools.jar
+    displayName: "unix systemtest dependencies: download systemtest dependencies from blob storage"
+    

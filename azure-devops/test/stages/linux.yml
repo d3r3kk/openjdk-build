@@ -1,0 +1,271 @@
+parameters:
+  linuxContainer: ""
+  buildJavaVersion: ""
+
+stages:
+  - stage: linux_ci_extended_system
+    variables:
+      skipComponentGovernanceDetection: true
+      BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
+    displayName: "Linux CI: extended.system"
+    condition: and(
+      or(
+      not(variables.TEST_PLATFORMS_AND_STAGES),
+      contains(variables.TEST_PLATFORMS_AND_STAGES, 'Linux.ci')
+      ),
+      succeeded('build_linux_binaries')
+      )
+    dependsOn: build_linux_binaries
+
+    jobs:
+      - job: extended_system
+        timeoutInMinutes: 120
+        displayName: "extended.system"
+        pool:
+          vmImage: ubuntu-16.04
+        container: ${{ parameters.linuxContainer }}
+        variables:
+          BUILD_LIST: "system"
+          TEST_TARGET: "_extended.system"
+        steps:
+          - template: ../steps/shared/pre_test.yml
+          - template: ../steps/shared/unix_systemtest_dependencies.yml
+          - template: ../steps/linux/pre_test.yml
+          - template: ../steps/linux/test.yml
+          - template: ../steps/shared/post_test.yml
+            parameters:
+              testFailTaskOnFailedTests: true
+              testTestResultsFiles: "**/*.tap.xml"
+
+  - stage: linux_nightly_sanity_external
+    variables:
+      skipComponentGovernanceDetection: true
+      BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
+    displayName: "Linux Nightly: sanity.external"
+    condition: and(
+      or(
+      not(variables.TEST_PLATFORMS_AND_STAGES),
+      contains(variables.TEST_PLATFORMS_AND_STAGES, 'Linux.nightly')
+      ),
+      succeeded('build_linux_binaries')
+      )
+    dependsOn: build_linux_binaries
+
+    jobs:
+      - job: sanity_external
+        timeoutInMinutes: 720
+        displayName: "sanity.external"
+        pool:
+          vmImage: ubuntu-16.04
+        container: ${{ parameters.linuxContainer }}
+        variables:
+          BUILD_LIST: "external"
+          TEST_TARGET: "_sanity.external"
+        steps:
+          - template: ../steps/shared/pre_test.yml
+          - template: ../steps/shared/linux_externaltest_dependencies.yml
+          - template: ../steps/linux/pre_test.yml
+          - template: ../steps/linux/test.yml
+          - template: ../steps/shared/post_test.yml
+            parameters:
+              testFailTaskOnFailedTests: false
+              testTestResultsFiles: "**/*.tap.xml"
+
+  - stage: linux_pr_sanity_openjdk
+    variables:
+      skipComponentGovernanceDetection: true
+      BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
+    displayName: "Linux PR: sanity.openjdk"
+    condition: and(
+      or(
+      not(variables.TEST_PLATFORMS_AND_STAGES),
+      contains(variables.TEST_PLATFORMS_AND_STAGES, 'Linux.pr')
+      ),
+      succeeded('build_linux_binaries')
+      )
+    dependsOn: build_linux_binaries
+
+    jobs:
+      - job: sanity_openjdk
+        timeoutInMinutes: 120
+        displayName: "sanity.openjdk"
+        pool:
+          vmImage: ubuntu-16.04
+        container: ${{ parameters.linuxContainer }}
+        variables:
+          BUILD_LIST: "openjdk"
+          TEST_TARGET: "_individual.openjdk"
+        strategy:
+          matrix:
+            jdk_io_math_jre:
+              CUSTOMIZED_TESTS: "openjdk:jdk_io|openjdk:jdk_math|openjdk:jdk_math_jre"
+            jdk_net:
+              CUSTOMIZED_TESTS: "openjdk:jdk_net"
+            jdk_security1:
+              CUSTOMIZED_TESTS: "openjdk:jdk_security1"
+            jdk_lang:
+              CUSTOMIZED_TESTS: "openjdk:jdk_lang"
+            jdk_nio:
+              CUSTOMIZED_TESTS: "openjdk:jdk_nio"
+            jdk_rmi:
+              CUSTOMIZED_TESTS: "openjdk:jdk_rmi"
+            jdk_util:
+              CUSTOMIZED_TESTS: "openjdk:jdk_util"
+        steps:
+          - template: ../steps/shared/pre_test.yml
+          - template: ../steps/linux/pre_test.yml
+          - template: ../steps/linux/test.yml
+          - template: ../steps/shared/post_test.yml
+            parameters:
+              testFailTaskOnFailedTests: true
+              testTestResultsFiles: "**/*.jtr.xml"
+
+  - stage: linux_pr_sanity_system
+    variables:
+      skipComponentGovernanceDetection: true
+      BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
+    displayName: "Linux PR: sanity.system"
+    condition: and(
+      or(
+      not(variables.TEST_PLATFORMS_AND_STAGES),
+      contains(variables.TEST_PLATFORMS_AND_STAGES, 'Linux.pr')
+      ),
+      succeeded('build_linux_binaries')
+      )
+    dependsOn: build_linux_binaries
+
+    jobs:
+      - job: sanity_system
+        timeoutInMinutes: 120
+        displayName: "sanity.system"
+        pool:
+          vmImage: ubuntu-16.04
+        container: ${{ parameters.linuxContainer }}
+        strategy:
+          matrix:
+            "otherLoadTest & mauveLoadTest":
+              BUILD_LIST: "system/otherLoadTest,system/mauveLoadTest"
+              TEST_TARGET: "_sanity.system"
+            "mathLoadTest & lambdaLoadTest":
+              BUILD_LIST: "system/mathLoadTest,system/lambdaLoadTest"
+              TEST_TARGET: "_sanity.system"
+            jlm1:
+              BUILD_LIST: "system/jlm"
+              CUSTOMIZED_TESTS: "system/jlm:MachineInfo|system/jlm:TestJlmRemoteClassAuth|system/jlm:TestJlmRemoteClassNoAuth_SE80_Linux"
+              TEST_TARGET: "_individual.system"
+            jlm2:
+              BUILD_LIST: "system/jlm"
+              CUSTOMIZED_TESTS: "system/jlm:TestJlmRemoteMemoryAuth_SE80_Linux|system/jlm:TestJlmRemoteMemoryNoAuth_SE80_Linux|system/jlm:TestJlmRemoteNotifierProxyAuth"
+              TEST_TARGET: "_individual.system"
+        steps:
+          - template: ../steps/shared/pre_test.yml
+          - template: ../steps/shared/unix_systemtest_dependencies.yml
+          - template: ../steps/linux/pre_test.yml
+          - template: ../steps/linux/test.yml
+          - template: ../steps/shared/post_test.yml
+            parameters:
+              testFailTaskOnFailedTests: true
+              testTestResultsFiles: "**/*.tap.xml"
+
+  - ${{ if ne(parameters.buildJavaVersion, 'jdk') }}:
+      - stage: linux_pr_sanity_perf
+        variables:
+          skipComponentGovernanceDetection: true
+          BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
+        displayName: "Linux PR: sanity.perf"
+        condition: and(
+          or(
+          not(variables.TEST_PLATFORMS_AND_STAGES),
+          contains(variables.TEST_PLATFORMS_AND_STAGES, 'Linux.pr')
+          ),
+          succeeded('build_linux_binaries')
+          )
+        dependsOn: build_linux_binaries
+
+        jobs:
+          - job: sanity_perf
+            timeoutInMinutes: 120
+            displayName: "sanity.perf"
+            pool:
+              vmImage: ubuntu-16.04
+            container: ${{ parameters.linuxContainer }}
+            variables:
+              BUILD_LIST: "perf"
+              TEST_TARGET: "_sanity.perf"
+            steps:
+              - template: ../steps/shared/pre_test.yml
+              - template: ../steps/shared/perftest_dependencies.yml
+              - template: ../steps/linux/pre_test.yml
+              - template: ../steps/linux/test.yml
+              - template: ../steps/shared/post_test.yml
+                parameters:
+                  testFailTaskOnFailedTests: true
+                  testTestResultsFiles: "**/*.tap.xml"
+
+  - ${{ if ne(parameters.buildJavaVersion, 'jdk11u') }}:
+      - stage: linux_nightly_special_functional
+        variables:
+          skipComponentGovernanceDetection: true
+          BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
+        displayName: "Linux Nightly: special.functional"
+        condition: and(
+          or(
+          not(variables.TEST_PLATFORMS_AND_STAGES),
+          contains(variables.TEST_PLATFORMS_AND_STAGES, 'Linux.nightly')
+          ),
+          succeeded('build_linux_binaries')
+          )
+        dependsOn: build_linux_binaries
+
+        jobs:
+          - job: special_functional
+            timeoutInMinutes: 120
+            displayName: "special.functional"
+            pool:
+              vmImage: ubuntu-16.04
+            container: ${{ parameters.linuxContainer }}
+            variables:
+              BUILD_LIST: "functional"
+              TEST_TARGET: "_special.functional"
+            steps:
+              - template: ../steps/shared/pre_test.yml
+              - template: ../steps/linux/pre_test.yml
+              - template: ../steps/linux/test.yml
+              - template: ../steps/shared/post_test.yml
+                parameters:
+                  testFailTaskOnFailedTests: true
+                  testTestResultsFiles: "**/*.tap.xml"
+
+  - ${{ if eq(parameters.buildJavaVersion, 'jdk8u') }}:
+      - stage: linux_nightly_special_openjdk
+        variables:
+          skipComponentGovernanceDetection: true
+          BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
+        displayName: "Linux Nightly: special.openjdk"
+        condition: and(
+          or(
+          not(variables.TEST_PLATFORMS_AND_STAGES),
+          contains(variables.TEST_PLATFORMS_AND_STAGES, 'Linux.nightly')
+          ),
+          succeeded('build_linux_binaries')
+          )
+        dependsOn: build_linux_binaries
+
+        jobs:
+          - job: special_openjdk
+            timeoutInMinutes: 120
+            displayName: "special.openjdk"
+            pool:
+              vmImage: ubuntu-16.04
+            container: ${{ parameters.linuxContainer }}
+            variables:
+              BUILD_LIST: "openjdk"
+              TEST_TARGET: "_special.openjdk"
+            steps:
+              - template: ../steps/shared/pre_test.yml
+              - template: ../steps/linux/pre_test.yml
+              - template: ../steps/linux/test.yml
+              - template: ../steps/shared/post_test.yml
+                parameters:
+                  testFailTaskOnFailedTests: true
+                  testTestResultsFiles: "**/*.tap.xml"

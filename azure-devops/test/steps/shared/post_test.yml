@@ -1,0 +1,31 @@
+parameters:
+  testFailTaskOnFailedTests: ""
+  testTestResultsFiles: ""
+
+steps:
+  - bash: |
+      cd $COMMON_TESTRESULTSDIRECTORY
+      TAP_FILE_PATH=$(find . -type f -name "*.tap" -print | head -n 1)
+      echo "TAP_FILE_PATH: $TAP_FILE_PATH"
+      cat "$TAP_FILE_PATH" | tap-xunit > results.tap.xml || true
+    displayName: "Post Test: convert tap to xml file"
+    condition: and(succeeded(), contains('${{ parameters.testTestResultsFiles }}', 'tap'))
+
+  # Publish the .tap.xml file to AzDO
+  # even though the we use tap-xunit, we still need to use JUnit plugin
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: "JUnit"
+      testResultsFiles: ${{ parameters.testTestResultsFiles }}
+      searchFolder: "$(Common.TestResultsDirectory)"
+      mergeTestResults: true
+      failTaskOnFailedTests: ${{ parameters.testFailTaskOnFailedTests }}
+      testRunTitle: "$(TEST_TARGET)-$(Agent.OSArchitecture)-$(Agent.OS)"
+    displayName: "Post Test: publish test result"
+
+  # Unset the global git authorization header. Remove this to ensure we have cleaned up any authorization keys
+  # that could be abused by further runs of this pipeline instance.
+  - bash: |
+      git config --global --unset http.https://dev.azure.com.extraheader
+    displayName: "Post Test: git remove auth header(s)"
+    condition: always()

@@ -176,7 +176,7 @@ configuringVersionStringParameter()
     addConfigureArg "--with-milestone=" "fcs"
   fi
 
-  local dateSuffix=$(date -u +%Y%m%d%H%M)
+  local dateSuffix=$(date -u +%Y%m%d)
 
   if [ "${BUILD_CONFIG[OPENJDK_CORE_VERSION]}" == "${JDK8_CORE_VERSION}" ]; then
 
@@ -185,7 +185,7 @@ configuringVersionStringParameter()
     fi
 
     if [ "${BUILD_CONFIG[BUILD_VARIANT]}" == "${BUILD_VARIANT_HOTSPOT}" ] && [ ${BUILD_CONFIG[ADOPT_PATCHES]} == true ]; then
-      addConfigureArg "--with-vendor-name=" "AdoptOpenJDK"
+      addConfigureArg "--with-vendor-name=" "Microsoft8.$BUILD_BUILDID"
     fi
 
     # Set the update version (e.g. 131), this gets passed in from the calling script
@@ -236,15 +236,15 @@ configuringVersionStringParameter()
 
     addConfigureArg "--without-version-pre" ""
     addConfigureArgIfValueIsNotEmpty "--with-version-build=" "${buildNumber}"
-    addConfigureArg "--with-vendor-version-string=" "AdoptOpenJDK"
-    addConfigureArg "--with-vendor-url=" "https://adoptopenjdk.net/"
-    addConfigureArg "--with-vendor-name=" "AdoptOpenJDK"
-    addConfigureArg "--with-vendor-bug-url=" "https://github.com/AdoptOpenJDK/openjdk-support/issues"
+    addConfigureArg "--with-vendor-version-string=" "Microsoft.$BUILD_BUILDID"
+    addConfigureArg "--with-vendor-url=" "http://www.microsoft.com"
+    addConfigureArg "--with-vendor-name=" "Microsoft"
+    addConfigureArg "--with-vendor-bug-url=" "https://support.microsoft.com"
 
     if [[ "${BUILD_CONFIG[BUILD_VARIANT]}" == "${BUILD_VARIANT_OPENJ9}" ]]; then
       addConfigureArg "--with-vendor-vm-bug-url=" "https://github.com/eclipse/openj9/issues"
     else
-      addConfigureArg "--with-vendor-vm-bug-url=" "https://github.com/AdoptOpenJDK/openjdk-support/issues"
+      addConfigureArg "--with-vendor-vm-bug-url=" "https://support.microsoft.com"
     fi
   fi
   echo "Completed configuring the version string parameter, config args are now: ${CONFIGURE_ARGS}"
@@ -673,7 +673,7 @@ createArchive() {
 
   echo "Your final archive was created at ${archive}"
 
-  echo "Moving the artifact to ${BUILD_CONFIG[WORKSPACE_DIR]}/${BUILD_CONFIG[TARGET_DIR]}"
+  echo "Moving the artifact from ${archive} to ${BUILD_CONFIG[WORKSPACE_DIR]}/${BUILD_CONFIG[TARGET_DIR]}/${targetName}"
   mv "${archive}" "${BUILD_CONFIG[WORKSPACE_DIR]}/${BUILD_CONFIG[TARGET_DIR]}/${targetName}"
 }
 

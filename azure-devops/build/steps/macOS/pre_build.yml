@@ -1,0 +1,42 @@
+parameters:
+  buildJavaVersion: ""
+  macOSBootJDKUri: ""
+  jdkBootDir: "/tmp/openjdk"
+  javaHomeDir: "/tmp/java"
+
+steps:
+  - script: |
+      brew install autoconf
+    displayName: "macOS Pre Build: brew install dependencies"
+
+  - script: |
+      mkdir -p ${{ parameters.jdkBootDir }}
+      mkdir -p ${{ parameters.javaHomeDir }}
+      wget -O /tmp/openjdk8.tar.gz "https://buildreqs.blob.core.windows.net/java/macOS/jdk8u.tar.gz"
+      tar -xzf /tmp/openjdk8.tar.gz --strip-components=3 -C ${{ parameters.javaHomeDir }}
+      if [ "${{ parameters.macOSBootJDKUri }}" != "" ]
+      then
+          wget -O /tmp/openjdk.tar.gz "${{ parameters.macOSBootJDKUri }}"
+      elif [ "${{ parameters.buildJavaVersion }}" == "jdk8u" ]
+      then
+          wget -O /tmp/openjdk.tar.gz "https://buildreqs.blob.core.windows.net/java/macOS/jdk8u.tar.gz"
+      elif [ "${{ parameters.buildJavaVersion }}" == "jdk11u" ]
+      then
+          wget -O /tmp/openjdk.tar.gz "https://buildreqs.blob.core.windows.net/java/macOS/jdk10u.tar.gz"
+      elif [ "${{ parameters.buildJavaVersion }}" == "jdk" ]
+      then
+          wget -O /tmp/openjdk.tar.gz "https://buildreqs.blob.core.windows.net/java/macOS/jdk13u.tar.gz"
+      fi
+      tar -xzf /tmp/openjdk.tar.gz --strip-components=3 -C ${{ parameters.jdkBootDir }}
+    displayName: "macOS Pre Build: download and install adopt openjdk boot jdk"
+
+  - script: |
+      echo "##vso[task.setvariable variable=OPERATING_SYSTEM]macOS"
+      echo "##vso[task.setvariable variable=JDK_BOOT_DIR]${{ parameters.jdkBootDir }}"
+      echo "##vso[task.setvariable variable=JAVA_HOME]${{ parameters.javaHomeDir }}"
+      echo "##vso[task.setvariable variable=PATH]${{ parameters.jdkBootDir }}/bin;$PATH"
+    displayName: "macOS Pre Build: set environment variables"
+
+  - template: ../pre_build.yml
+    parameters:
+      buildJavaVersion: ${{ parameters.buildJavaVersion }}

@@ -1,0 +1,161 @@
+# Pre build template
+#
+# Steps needed before any build for any platform,
+# which includes setting and verifying required variables, and
+# downloading adopt-build repo to build the openjdk afterwards.
+#
+
+parameters:
+  buildJavaVersion: ""
+
+steps:
+  # Verify required enviroment variables to build the openjdk.
+  # If any of them is not set, the pipeline does not proceed to build and ends here.
+  - bash: |
+      ERR_MESSAGE_MISSING_ENV=''
+
+      if [ -z "$JDK_BOOT_DIR" ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set JDK_BOOT_DIR. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ -z "$JAVA_HOME" ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set JAVA_HOME. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ -z $(JAVA_SOURCE_REPO_URI) ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set JAVA_SOURCE_REPO_URI. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ -z "$BUILD_JAVA_VERSION" ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set BUILD_JAVA_VERSION to jdk8, jdk11, jdk, etc. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ -z $(BUILD_DEBUG_LEVEL) ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set BUILD_DEBUG_LEVEL to fastdebug, slowdebug, release. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ -z $(ADOPT_OPENJDK_BUILD_REPO_URI) ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set ADOPT_OPENJDK_BUILD_REPO_URI to URI of the openjdk-build repo to use. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ -z $(ADOPT_OPENJDK_BUILD_REPO_BRANCH) ]; then
+        ERR_MESSAGE_MISSING_ENV="Pipeline must set ADOPT_OPENJDK_BUILD_REPO_BRANCH to the branch-name of the openjdk-build repo to use. $ERR_MESSAGE_MISSING_ENV"
+      fi;
+
+      if [ ! -z "$ERR_MESSAGE_MISSING_ENV" ]; then
+        echo "##vso[task.logissue type=error;]$ERR_MESSAGE_MISSING_ENV"
+        echo "##vso[task.complete result=Failed;]"
+      fi;
+    env:
+      BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
+    displayName: "Pre Build: check required environment variables"
+
+  # Set the HOME environment variable
+  - script: |
+      echo ##vso[task.setvariable variable=HOME]$(Agent.BuildDirectory)
+    displayName: "Pre Build: set HOME environment variable"
+
+  # Set crlf to keep original EOL when checkout
+  - bash: |
+      git config --global core.autocrlf input
+    displayName: "Pre Build: configure crlf option"
+
+  - checkout: self
+
+  # Set the git authorization header for subsequent git pull/clone operations...
+  # <This step is unnecessary on your local workstation, can be approximated by using SSH URIs>
+  - bash: |
+      git config --global --add http.https://dev.azure.com.extraheader "AUTHORIZATION: bearer $(System.AccessToken)"
+    displayName: "Pre Build: add auth header"
+
+  # Checkout the sources for the OpenJDK-11-updates repo (save the makejdk script from doing this later)
+  # Note: Ensure the JUNIPER_BUILD_BRANCH is set to a valid default.
+  - bash: |
+      git clone --single-branch --branch $(ADOPT_OPENJDK_BUILD_REPO_BRANCH) --depth 1 $(ADOPT_OPENJDK_BUILD_REPO_URI) "$(Agent.BuildDirectory)/openjdk-build"
+    displayName: "Pre Build: checkout openjdk-build"
+
+  # Cache dependencies needed by the adopt's build
+  - task: Cache@2
+    inputs:
+      key: 'gradle | "$(Agent.OS)"'
+      path: $(Agent.BuildDirectory)/openjdk-build/pipelines/gradle-cache
+    displayName: "Pre Build: cache gradle"
+
+  # Adjust source branch to build the openjdk on
+  - bash: |
+      # RH is just the prepended `refs/heads/` that we want to remove to get the branch name
+      RH='refs/heads/';
+      # Apologies for the bash magic here, see:
+      # https://landoflinux.com/linux_bash_scripting_substring_tests.html#Extracting%20a%20Substring%20from%20a%20Variable
+      JAVA_SOURCE_REPO_BRANCH=${BUILD_SOURCEBRANCH:${#RH}};
+      echo "possible JAVA_SOURCE_REPO_BRANCH = $JAVA_SOURCE_REPO_BRANCH"
+
+      if [ -n "$SYSTEM_PULLREQUEST_SOURCEBRANCH" -o "$SYSTEM_PULLREQUEST_SOURCEBRANCH" != "" ]; then
+        # If this is a pull request, SYSTEM_PULLREQUEST_SOURCEBRANCH will be set to the 'refs/heads/<branch-name>',
+        # extract branch-name.
+        JAVA_SOURCE_REPO_BRANCH=${SYSTEM_PULLREQUEST_SOURCEBRANCH:${#RH}};
+        echo "update JAVA_SOURCE_REPO_BRANCH to  PR branch $JAVA_SOURCE_REPO_BRANCH"
+      fi;
+      echo "##vso[task.setvariable variable=JAVA_SOURCE_REPO_BRANCH]$JAVA_SOURCE_REPO_BRANCH"
+    displayName: "Pre Build: set build source branch"
+
+  # Set jdk variant and architecure variables. Used in the build
+  - bash: |
+      echo "##vso[task.setvariable variable=VARIANT]hotspot"
+      echo "##vso[task.setvariable variable=ARCHITECTURE]x64"
+    displayName: "Pre Build: set shared environment variables"
+
+  - bash: |
+      git fetch --tags
+      rev=$(git rev-list --tags --topo-order --max-count=100)
+      tag=$(git describe --tags $rev | grep jdk | grep -v openj9 | grep -v _adopt | grep -v "\-ga" | head -1)
+      # this may not find the correct tag if there are multiples on the commit so find commit
+      # that contains this tag and then use `git tag` to find the real tag
+      rev=$(git rev-list -n 1 $tag --)
+      tag=$(git tag --points-at $rev | grep -v "\-ga" | tail -1)
+      echo "##vso[task.setvariable variable=OPENJDK_TAG]$tag"
+    displayName: "Pre Build: set hg tag"
+
+  # Set OPENJDK_OUTPUT_FILE_PREFIX to name openjdk file after build
+  - bash: |
+      if [ "$BUILD_JAVA_VERSION" == "jdk" ] || [ "$BUILD_JAVA_VERSION" == "jdk11u" ]; then
+        build=${OPENJDK_TAG##*+}
+        TEMP=$OPENJDK_TAG
+        TEMP=${TEMP%%+*}
+        version=${TEMP##*-}
+        size=$(echo $version | tr -cd '.' | wc -c)
+        while [ $size -lt 2 ]
+        do
+          version="$version.0"
+          size=$(echo $version | tr -cd '.' | wc -c)
+        done
+        echo "##vso[task.setvariable variable=OPENJDK_OUTPUT_FILE_PREFIX]microsoft-jdk-$version.$build-$(date '+%Y.%m.%d').$(Build.BuildId)"
+      else
+        build=$(echo "${OPENJDK_TAG##*b}" | sed 's/^0*//')
+        TEMP=$OPENJDK_TAG
+        TEMP=${TEMP%%-*}
+        version=${TEMP##*u}
+        echo "##vso[task.setvariable variable=OPENJDK_OUTPUT_FILE_PREFIX]microsoft-jdk-8.$version.$build-$(date '+%Y.%m.%d').$(Build.BuildId)"
+      fi
+    env:
+      BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
+    displayName: "Pre Build: set file prefix"
+
+  # Set BUILD_HSDIS_DIR variable to build hsdis for each platform
+  - bash: |
+      if [ "$BUILD_HSDIS_DIR" != "" ]
+      then
+          echo "##vso[task.setvariable variable=BUILD_HSDIS_DIR]$BUILD_HSDIS_DIR"
+      else
+          TEMP=
+          case "${{ parameters.buildJavaVersion }}" in
+            "jdk8u")
+                    TEMP="$(Build.SourcesDirectory)/hotspot/src/share/tools/hsdis"
+                    ;;
+            *)
+                    TEMP="$(Build.SourcesDirectory)/src/utils/hsdis"
+                    ;;
+          esac
+          echo "##vso[task.setvariable variable=BUILD_HSDIS_DIR]$TEMP"
+      fi
+    displayName: "Pre Build: set hsdis dir environment variables"

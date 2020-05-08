@@ -1,0 +1,167 @@
+parameters:
+  buildJavaVersion: ""
+
+stages:
+  - stage: windows_pr_sanity_openjdk
+    variables:
+      skipComponentGovernanceDetection: true
+      BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
+    displayName: "Windows PR: sanity.openjdk"
+    condition: and(
+      or(
+      not(variables.TEST_PLATFORMS_AND_STAGES),
+      contains(variables.TEST_PLATFORMS_AND_STAGES, 'Windows.pr')
+      ),
+      succeeded('build_windows_binaries')
+      )
+    dependsOn: build_windows_binaries
+
+    jobs:
+      - job: sanity_openjdk
+        timeoutInMinutes: 720
+        displayName: "sanity.openjdk"
+        pool:
+          vmImage: vs2017-win2016
+        variables:
+          BUILD_LIST: "openjdk"
+          TEST_TARGET: "_sanity.openjdk"
+        steps:
+          - template: ../steps/shared/pre_test.yml
+          - template: ../steps/windows/pre_test.yml
+          - template: ../steps/windows/test.yml
+          - template: ../steps/shared/post_test.yml
+            parameters:
+              testFailTaskOnFailedTests: true
+              testTestResultsFiles: "**/*.jtr.xml"
+
+  - ${{ if ne(parameters.buildJavaVersion, 'jdk') }}:
+      - stage: windows_pr_sanity_system
+        variables:
+          skipComponentGovernanceDetection: true
+          BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
+        displayName: "Windows PR: sanity.system"
+        condition: and(
+          or(
+          not(variables.TEST_PLATFORMS_AND_STAGES),
+          contains(variables.TEST_PLATFORMS_AND_STAGES, 'Windows.pr')
+          ),
+          succeeded('build_windows_binaries')
+          )
+        dependsOn: build_windows_binaries
+
+        jobs:
+          - job: sanity_system
+            timeoutInMinutes: 720
+            displayName: "sanity.system"
+            pool:
+              vmImage: windows-latest
+            variables:
+              BUILD_LIST: "system"
+              TEST_TARGET: "_sanity.system"
+            steps:
+              - template: ../steps/shared/pre_test.yml
+              - template: ../steps/shared/windows_systemtest_dependencies.yml
+              - template: ../steps/windows/pre_test.yml
+              - template: ../steps/windows/test.yml
+              - template: ../steps/shared/post_test.yml
+                parameters:
+                  testFailTaskOnFailedTests: true
+                  testTestResultsFiles: "**/*.tap.xml"
+
+      - stage: windows_ci_extended_system
+        variables:
+          skipComponentGovernanceDetection: true
+          BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
+        displayName: "Windows CI: extended.system"
+        condition: and(
+          or(
+          not(variables.TEST_PLATFORMS_AND_STAGES),
+          contains(variables.TEST_PLATFORMS_AND_STAGES, 'Windows.ci')
+          ),
+          succeeded('build_windows_binaries')
+          )
+        dependsOn: build_windows_binaries
+
+        jobs:
+          - job: extended_system
+            timeoutInMinutes: 720
+            displayName: "extended.system"
+            pool:
+              vmImage: vs2017-win2016
+            variables:
+              BUILD_LIST: "system"
+              TEST_TARGET: "_extended.system"
+            steps:
+              - template: ../steps/shared/pre_test.yml
+              - template: ../steps/shared/windows_systemtest_dependencies.yml
+              - template: ../steps/windows/pre_test.yml
+              - template: ../steps/windows/test.yml
+              - template: ../steps/shared/post_test.yml
+                parameters:
+                  testFailTaskOnFailedTests: true
+                  testTestResultsFiles: "**/*.tap.xml"
+
+  - ${{ if eq(parameters.buildJavaVersion, 'jdk8u') }}:
+      - stage: windows_pr_special_openjdk
+        variables:
+          skipComponentGovernanceDetection: true
+          BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
+        displayName: "Windows Nightly: special.system"
+        condition: and(
+          or(
+          not(variables.TEST_PLATFORMS_AND_STAGES),
+          contains(variables.TEST_PLATFORMS_AND_STAGES, 'Windows.nightly')
+          ),
+          succeeded('build_windows_binaries')
+          )
+        dependsOn: build_windows_binaries
+
+        jobs:
+          - job: special_openjdk
+            displayName: "special.openjdk"
+            pool:
+              vmImage: windows-latest
+            variables:
+              BUILD_LIST: "openjdk"
+              TEST_TARGET: "_special.system"
+            steps:
+              - template: ../steps/shared/pre_test.yml
+              - template: ../steps/windows/pre_test.yml
+              - template: ../steps/windows/test.yml
+              - template: ../steps/shared/post_test.yml
+                parameters:
+                  testFailTaskOnFailedTests: true
+                  testTestResultsFiles: "**/*.jtr.xml"
+
+  - ${{ if eq(parameters.buildJavaVersion, 'jdk11u') }}:
+      - stage: windows_pr_sanity_perf
+        variables:
+          skipComponentGovernanceDetection: true
+          BUILD_JAVA_VERSION: ${{ parameters.buildJavaVersion }}
+        displayName: "Windows PR: sanity.perf"
+        condition: and(
+          or(
+          not(variables.TEST_PLATFORMS_AND_STAGES),
+          contains(variables.TEST_PLATFORMS_AND_STAGES, 'Windows.PR')
+          ),
+          succeeded('build_windows_binaries')
+          )
+        dependsOn: build_windows_binaries
+
+        jobs:
+          - job: sanity_perf
+            displayName: "sanity.perf"
+            pool:
+              vmImage: windows-latest
+            variables:
+              BUILD_LIST: "perf"
+              TEST_TARGET: "_sanity.perf"
+            steps:
+              - template: ../steps/shared/pre_test.yml
+              - template: ../steps/shared/perftest_dependencies.yml
+              - template: ../steps/windows/pre_test.yml
+              - template: ../steps/windows/test.yml
+              - template: ../steps/shared/post_test.yml
+                parameters:
+                  testFailTaskOnFailedTests: true
+                  testTestResultsFiles: "**/*.tap.xml"

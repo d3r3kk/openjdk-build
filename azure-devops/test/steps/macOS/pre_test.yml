@@ -1,0 +1,51 @@
+steps:
+  - bash: |
+      brew update
+    displayName: "macOS Pre Test: brew update"
+
+  # Install macOS required dependencies
+  - bash: |
+      set -e
+      brew install xmlstarlet ant ant-contrib
+    displayName: "macOS Pre Test: brew install dependencies"
+
+  - bash: |
+      npm install tap-xunit -g
+    displayName: "macOS Pre Test: npm install dependencies"
+
+  - bash: |
+      export PERL_MM_USE_DEFAULT=1
+      cpan install JSON Text::CSV XML::Parser
+    displayName: "macOS Pre Test: perl install dependencies"
+
+  # Create the expected dirs for the JDK/JRE to exist within for the test script and decompress the JDK and JRE into them.
+  # Remove the base-level folders from the JDK and JRE archives to allow us to refer to specific paths rather than the paths built into the archives.
+  - bash: |
+      cd $(Pipeline.Workspace)
+      mkdir -p ./j2sdk-image
+      mkdir -p ./j2re-image
+      mkdir -p ./test-image
+      tar -xzf *jdk*.tar.gz -C /$(Pipeline.Workspace)/j2sdk-image --strip-components=3
+      tar -xzf *jre*.tar.gz -C /$(Pipeline.Workspace)/j2re-image --strip-components=3
+      if [ "$BUILD_JAVA_VERSION" == "jdk11u" ] || [ "$BUILD_JAVA_VERSION" == "jdk" ]
+      then
+          tar -xzf *testimage*.tar.gz -C /$(Pipeline.Workspace)/test-image --strip-components=1
+      fi
+    displayName: "macOS Pre Test: decompress build pipeline artifact"
+
+  - bash: |
+      wget -O /tmp/openjdk_test_control.jar https://buildreqs.blob.core.windows.net/microsoft/openjdk_test_control.jar
+      $(Pipeline.Workspace)/j2sdk-image/bin/java -jar /tmp/openjdk_test_control.jar -file $(Build.Repository.LocalPath)/.devops/problemlist.json -directory $(Common.TestResultsDirectory)/openjdk-tests/openjdk -os $(Agent.OS)_$(Agent.OSArchitecture);
+    displayName: "macOS Pre Test: openjdk test inject problem list"
+    condition: and(succeeded(), contains(variables.BUILD_LIST, 'openjdk'))
+
+  - bash: |
+      echo "##vso[task.setvariable variable=DISPLAY]:1";
+      echo "##vso[task.setvariable variable=OPENJDK_SOURCES]$BUILD_REPOSITORY_LOCALPATH";
+      echo "##vso[task.setvariable variable=TEST_JDK_HOME]$PIPELINE_WORKSPACE/j2sdk-image";
+      echo "##vso[task.setvariable variable=OPENJDK_BUILD]$PIPELINE_WORKSPACE/j2sdk-image";
+      echo "##vso[task.setvariable variable=TESTIMAGE_PATH]$PIPELINE_WORKSPACE/test-image";
+      echo "##vso[task.setvariable variable=TEST_DIR]$COMMON_TESTRESULTSDIRECTORY/openjdk-tests"
+      echo "##vso[task.setvariable variable=JRE_IMAGE]$PIPELINE_WORKSPACE/j2re-image";
+      echo "##vso[task.setvariable variable=BUILD_ROOT]$COMMON_TESTRESULTSDIRECTORY/openjdk-tests/test-result";
+    displayName: "macOS Pre Test: update os specific test environment variables"

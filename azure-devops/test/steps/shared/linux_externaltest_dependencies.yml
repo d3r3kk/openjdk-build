@@ -1,0 +1,21 @@
+parameters:
+  containerRegistryUri: "junipercontainerregistry.azurecr.io"
+  containerRegistry: "juniper-container-registry"
+  repository: "azure-devops-pipeline"
+
+steps:
+  - bash: |
+      echo "##vso[task.setvariable variable=DOCKERIMAGE_TAG]linux-${{ parameters.javaVersion }}-$(Build.BuildNumber)"
+    displayName: "linux externaltest dependencies: set DOCKERIMAGE_TAG"
+
+  - task: Docker@2
+    inputs:
+      containerRegistry: ${{ parameters.containerRegistry }}
+      repository: ${{ parameters.repository }}
+      command: "login"
+      tags: "linux-${{ parameters.javaVersion }}-$(Build.BuildNumber)"
+    displayName: "linux externaltest dependencies: docker login"
+
+  - bash: |
+      docker pull "${{ parameters.containerRegistryUri }}/${{ parameters.repository }}:${DOCKERIMAGE_TAG}"
+    displayName: "linux externaltest dependencies: docker pull"

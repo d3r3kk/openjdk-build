@@ -1,0 +1,27 @@
+steps:
+  - template: ../shared/pre_installer.yml
+
+  # download JDK/JRE artifact
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      buildType: "current"
+      artifactName: $(Agent.OS)_$(Agent.OSArchitecture)
+      itemPattern: "**"
+      targetPath: "workspace/target"
+    displayName: "macOS Installer: download JDK/JRE artifact"
+
+  - script: |
+      ./pkgbuild/create-installer-mac.sh
+    env:
+      SEARCH_PATTERN: "*.tar.gz"
+      WORKSPACE: $(Build.SourcesDirectory)
+      MAJOR_VERSION: "${PRODUCT_MAJOR_VERSION}"
+      FULL_VERSION: "${PRODUCT_MAJOR_VERSION}_${PRODUCT_MINOR_VERSION}_${PRODUCT_MAINTENANCE_VERSION}_${PRODUCT_PATCH_VERSION}"
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+      artifactName: $(Agent.OS)_$(Agent.OSArchitecture)_installer
+      targetPath: "workspace/target"
+    displayName: "macOS Installer: update JKD/JRE artifact"
+
+  - template: ../shared/post_installer.yml

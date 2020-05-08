@@ -1,0 +1,104 @@
+# 
+# Test template
+#
+# It defines the stages to test the JDK for different platforms
+# 
+# @param linuxContainer Container to test the JDK in
+# @param buildJavaVersion Java version to build and test, 
+#                         e.g., "jdk", "jdk8u", "jdk11u".
+# @param linuxTests JSON containing tests to run on linux
+# @param macOSTests JSON containing tests to run on macOS
+# @param windowsTests JSON containing tests to run on Windows
+#
+# Note: linuxTests, macOSTests, windowsTests run under matrix stragegy for multi-jobs
+# (https://docs.microsoft.com/en-us/azure/devops/pipelines/process/phases?view=azure-devops&tabs=yaml#multi-job-configuration).
+# They must define:
+#     TEST_RESULTS_ARTIFACT_NAME Name that the publish artifact takes
+#     JTREG_TESTS Set of tests to run from openjdk
+# Optional:
+#     NATIVE_PATH Path to native libraries
+#     EXCLUDE_FILE File with a list of tests to exclude
+#     EXCLUDE_TESTS Singe line comma separated list of individual tests to exclude
+
+parameters:
+  linuxContainer: ""
+  buildJavaVersion: ""
+  linuxTests: { }
+  macOSTests: { }
+  windowsTests: { }
+
+stages:
+  - stage: test_linux_binaries
+    variables:
+      skipComponentGovernanceDetection: true
+    displayName: "Test Linux Binaries"
+    dependsOn: build_linux_binaries
+    condition: and(
+      or(
+        not(variables.BUILD_PLATFORMS),
+        eq(variables.BUILD_PLATFORMS, '*'),
+        contains(variables.BUILD_PLATFORMS, 'Linux')
+      ), succeeded('build_linux_binaries'))
+    jobs:
+      - job: test_linux
+        displayName: "Test Linux"
+        pool:
+          vmImage: ubuntu-16.04
+        container: ${{ parameters.linuxContainer }}
+        steps:
+          - template: ../steps/linux/test.yml
+            parameters:
+              buildJavaVersion: "${{ parameters.buildJavaVersion }}"
+        strategy:
+          matrix: ${{ parameters.linuxTests }}
+              
+  - stage: test_macOS_binaries
+    variables:
+      skipComponentGovernanceDetection: true
+    displayName: "Test macOS Binaries"
+    dependsOn: build_macOS_binaries
+    condition: and(
+      or(
+        not(variables.BUILD_PLATFORMS),
+        eq(variables.BUILD_PLATFORMS, '*'),
+        contains(variables.BUILD_PLATFORMS, 'macOS')
+      ), succeeded('build_macOS_binaries'))
+    jobs:
+      - job: test_macOS
+        displayName: "Test macOS"
+        pool:
+          vmImage: macOS-10.14
+        steps:
+          - template: ../steps/macOS/pre.yml
+            parameters:
+              stage: "test"
+              buildJavaVersion: "${{ parameters.buildJavaVersion }}"
+          - template: ../steps/macOS/test.yml
+        strategy:
+          matrix: ${{ parameters.macOSTests }}
+
+  - stage: test_windows_binaries
+    variables:
+      skipComponentGovernanceDetection: true
+    displayName: "Test Windows Binaries"
+    dependsOn: build_windows_binaries
+    condition: and(
+      or(
+        not(variables.BUILD_PLATFORMS),
+        eq(variables.BUILD_PLATFORMS, '*'),
+        contains(variables.BUILD_PLATFORMS, 'Windows')
+      ), succeeded('build_windows_binaries'))
+    jobs:
+      - job: test_windows
+        displayName: "Test Windows"
+        pool:
+          vmImage: vs2017-win2016
+        steps:
+          - template: ../steps/windows/pre.yml
+            parameters:
+              stage: "test"
+              buildJavaVersion: "${{ parameters.buildJavaVersion }}"
+          - template: ../steps/windows/test.yml
+        strategy:
+          matrix: ${{ parameters.windowsTests }}
+                      
